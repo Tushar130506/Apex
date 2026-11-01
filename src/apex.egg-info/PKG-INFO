@@ -1,0 +1,22 @@
+Metadata-Version: 2.4
+Name: apex
+Version: 0.1.0
+Summary: APEX - Adaptive Performance & Aero eXperimentation: FastF1-based race strategy ML + CFD aero surrogate
+Requires-Python: >=3.10
+Requires-Dist: numpy
+Requires-Dist: pandas
+Requires-Dist: scikit-learn
+Requires-Dist: scipy
+Requires-Dist: pyarrow
+Requires-Dist: joblib
+Provides-Extra: ml
+Requires-Dist: lightgbm; extra == "ml"
+Provides-Extra: fastf1
+Requires-Dist: fastf1; extra == "fastf1"
+Provides-Extra: app
+Requires-Dist: fastapi; extra == "app"
+Requires-Dist: uvicorn; extra == "app"
+Requires-Dist: pydantic; extra == "app"
+Provides-Extra: dev
+Requires-Dist: pytest; extra == "dev"
+Requires-Dist: httpx; extra == "dev"

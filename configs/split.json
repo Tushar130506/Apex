@@ -1,0 +1,6 @@
+{
+  "train_years": [2022, 2023],
+  "val_years": [2024],
+  "test_years": [2025],
+  "note": "Same ground-effect regulation era for all splits. 2026 is a new regulation era - treat it as out-of-domain, not as more training data."
+}
