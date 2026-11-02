@@ -10,6 +10,9 @@ fastapi
 uvicorn
 pydantic
 
+[dashboard]
+streamlit
+
 [dev]
 pytest
 httpx

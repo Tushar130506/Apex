@@ -1,0 +1,20 @@
+[
+  {
+    "year": 2026,
+    "event": "United States Grand Prix",
+    "session": "Practice 3",
+    "key": "2026|United States Grand Prix|Practice 3",
+    "status": "verified",
+    "laps": 423,
+    "error": "The data you are trying to access has not been loaded yet. See `Session.load`"
+  },
+  {
+    "year": 2026,
+    "event": "Mexico City Grand Prix",
+    "session": "Practice 3",
+    "key": "2026|Mexico City Grand Prix|Practice 3",
+    "status": "verified",
+    "laps": 470,
+    "error": "The data you are trying to access has not been loaded yet. See `Session.load`"
+  }
+]

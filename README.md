@@ -7,6 +7,11 @@ you import it with FastF1. (`tests/fixtures.py` holds fake laps used only by uni
 pip install -e ".[ml,fastf1,app,dev]"
 pytest
 
+# Browse all processed seasons with filters and CSV export
+pip install -e ".[dashboard]"
+python materialize_fastf1.py
+streamlit run streamlit_dashboard.py
+
 # 1. import real data, one file per season  -> data/processed/laps_<year>.parquet
 python scripts/build_dataset.py season 2022 2023 2024 2025
 # Cache every FastF1 session (resumable; telemetry is optional and large)

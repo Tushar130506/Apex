@@ -17,6 +17,8 @@ Provides-Extra: app
 Requires-Dist: fastapi; extra == "app"
 Requires-Dist: uvicorn; extra == "app"
 Requires-Dist: pydantic; extra == "app"
+Provides-Extra: dashboard
+Requires-Dist: streamlit; extra == "dashboard"
 Provides-Extra: dev
 Requires-Dist: pytest; extra == "dev"
 Requires-Dist: httpx; extra == "dev"

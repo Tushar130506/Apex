@@ -13,6 +13,7 @@ dependencies = ["numpy", "pandas", "scikit-learn", "scipy", "pyarrow", "joblib"]
 ml = ["lightgbm"]
 fastf1 = ["fastf1"]
 app = ["fastapi", "uvicorn", "pydantic"]
+dashboard = ["streamlit"]
 dev = ["pytest", "httpx"]
 
 [tool.setuptools.packages.find]
