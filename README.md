@@ -38,6 +38,31 @@ python scripts/predict.py --run runs/pace_v1 --years 2025 --out data/predictions
   set `season_seen_in_training=False` - treat results as out-of-domain.
 - Targets are one-step-ahead: each lap is predicted from earlier clean laps in its stint. Baselines: previous lap and rolling mean.
 
+## v0.2 race-winner foundation
+
+`APEX_RACE_WINNER_CONTEXT.md` defines the holdout-safe plan for race-winner
+prediction. The first implementation slice is available through
+`apex.features.race_features.build_race_features`: it aggregates clean laps into
+driver/session rows, calculates fuel-adjusted pace with an explicit sensitivity
+assumption, and carries robust stint degradation estimates plus fuel provenance.
+
+This is intentionally not a winner model yet. Official race results, qualifying
+or grid position, and verified race-session identity must be joined before
+training a race-level ranking model. Full-stint degradation is retrospective and
+must not be used as a pre-race feature; use earlier-session degradation for
+pre-race scoring and current-stint history only for live prediction.
+
+To materialize official results from the FastF1 cache:
+
+```bash
+python scripts/build_race_results.py 2022 2023 2024 2025
+python scripts/train_winner.py --train-years 2022 2023 --val-years 2024 --test-years 2025
+python scripts/repeated_holdout_winner.py
+```
+
+Result materialization fails if any round cannot be loaded. Use
+`--allow-skips` only when a partial result file is explicitly acceptable.
+
 ## Caveats
 - Fuel mass is an estimate (linear burn); FastF1 has no fuel data. Neutralised/pit/inaccurate laps are excluded with a stored reason.
 - Driver, team, circuit, weather and traffic are confounders: read `mae_by_track` / `mae_by_compound` in `metrics.json`.

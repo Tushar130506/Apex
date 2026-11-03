@@ -5,6 +5,9 @@ from apex.data_io import load_processed
 from apex.evaluation.reports import predict_with_run, train_run
 from apex.evaluation.splits import LeakageError, assert_no_leakage, season_split
 from apex.features.lap_features import build_features
+from apex.features.race_features import build_race_features
+from apex.features.winner_features import add_session_identity, build_pre_race_features, validate_race_targets
+from apex.models.winner import train_winner_model
 from apex.models.degradation import stint_slopes
 from apex.schemas.contracts import ContractError, validate_laps
 from apex.strategy.pace_model import ParametricPace
@@ -51,6 +54,60 @@ def test_degradation_and_fuel_recovered(laps):
     assert p.fuel_s_per_kg == pytest.approx(fx.FUEL_EFFECT_S_PER_KG, abs=0.006)
     s = stint_slopes(laps, fuel_s_per_kg=fx.FUEL_EFFECT_S_PER_KG)
     assert len(s) > 10
+
+
+def test_race_features_include_fuel_and_degradation(laps):
+    features = build_race_features(laps, fuel_s_per_kg=fx.FUEL_EFFECT_S_PER_KG)
+    assert len(features) == laps.session_id.nunique()
+    assert {
+        "fuel_corrected_median_lap_s",
+        "degradation_s_per_lap",
+        "estimated_fuel_fraction",
+        "feature_quality",
+    } <= set(features.columns)
+    row = features.iloc[0]
+    assert row.fuel_sensitivity_s_per_kg == pytest.approx(fx.FUEL_EFFECT_S_PER_KG)
+    assert row.feature_quality == "usable"
+    assert row.estimated_fuel_fraction == pytest.approx(1.0)
+
+
+def test_race_features_reject_invalid_configuration(laps):
+    with pytest.raises(ValueError, match="fuel_s_per_kg"):
+        build_race_features(laps, fuel_s_per_kg=-1)
+    with pytest.raises(ValueError, match="missing"):
+        build_race_features(laps.drop(columns=["fuel_kg"]))
+
+
+def test_winner_features_and_holdout_model():
+    rows = []
+    for season in (2022, 2023, 2024, 2025):
+        for rnd in range(1, 3):
+            for driver, pace in (("AAA", 80.0), ("BBB", 81.0), ("CCC", 82.0)):
+                for lap in range(1, 9):
+                    rows.append({
+                        "source": "fastf1_real", "season": season,
+                        "session_id": f"fastf1_{season}_{rnd}_Practice 1",
+                        "track": f"Track {rnd}", "driver": driver, "lap_no": lap,
+                        "lap_time_s": pace + lap * 0.02, "valid": True,
+                        "exclusion_reason": None, "compound": "MEDIUM", "tyre_age": lap,
+                        "stint_id": 1, "fuel_kg": 100 - lap, "fuel_provenance": "estimated",
+                        "track_temp": 30.0, "air_temp": 20.0, "track_status": "1", "is_pit_lap": False,
+                    })
+    laps = pd.DataFrame(rows)
+    features = build_pre_race_features(laps)
+    results = pd.DataFrame([
+        {"race_id": f"{season}_{rnd}", "driver": driver, "finish_position": 1 if driver == "AAA" else 2,
+         "grid_position": 1 if driver == "AAA" else 2, "classified": True}
+        for season in (2022, 2023, 2024, 2025)
+        for rnd in range(1, 3)
+        for driver in ("AAA", "BBB", "CCC")
+    ])
+    from apex.features.winner_features import attach_race_results
+    joined = attach_race_results(features, results)
+    validate_race_targets(joined)
+    metrics, _ = train_winner_model(joined, [2022], [2023], [2024, 2025])
+    assert set(metrics) == {"train", "val", "test"}
+    assert metrics["test"]["races"] == 4
 
 
 def test_training_refuses_fixture_source_by_default(laps, tmp_path):
