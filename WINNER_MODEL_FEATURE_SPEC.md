@@ -275,10 +275,10 @@ grid_gap_to_pole
 
 This is robust to missing grid numbers and expresses distance from pole.
 
-## Proposed additions before production use
+## Implemented historical and context features
 
-These are specified but must not be added until their source and timestamp
-are verified.
+These features are implemented in `MODEL_COLUMNS`. Their inputs are restricted
+to information available before the target race.
 
 ### 23. Driver recent form
 
@@ -300,11 +300,14 @@ The target race must be excluded.
 
 ### 24. Team recent form
 
-For both team cars over the previous `N = 5` races:
+For both team cars over the previous `N = 5` distinct races:
 
 ```text
 team_form_score
-    = mean(team_points_per_race)
+    = mean(1 / max(finish_position, 1))
+
+team_recent_mean_finish
+    = mean(finish_position)
 ```
 
 Team identity must come from pre-race entry data, not inferred from finishing
@@ -312,7 +315,7 @@ results in the target race.
 
 ### 25. Reliability
 
-Calculated only from races before the target race:
+Calculated only from prior rows before the target race:
 
 ```text
 driver_finish_rate
@@ -325,7 +328,7 @@ team_dnf_rate
     = team DNFs / team starts
 ```
 
-These should be smoothed for small samples:
+The implementation applies Laplace smoothing:
 
 ```text
 smoothed_rate
@@ -335,17 +338,17 @@ smoothed_rate
 
 ### 26. Weather
 
-Only forecast or pre-race weather may be used:
+Practice-session weather fields available before the race are used:
 
 ```text
-air_temperature
-track_temperature
-rain_probability
-wind_speed
-humidity
+practice_air_temp
+practice_track_temp
+practice_wet_lap_fraction
 ```
 
-Actual race weather is forbidden for pre-race prediction.
+The wet-lap fraction is based on INTERMEDIATE/WET compounds or an available
+weather wetness signal. Actual race weather is forbidden for pre-race
+prediction.
 
 ### 27. Circuit history
 
@@ -355,8 +358,7 @@ Using only races before the target race:
 driver_track_mean_finish
 driver_track_start_count
 team_track_mean_finish
-track_overtaking_difficulty
-track_safety_car_rate
+team_track_start_count
 ```
 
 Sparse history must be represented with counts and missingness indicators.
@@ -605,9 +607,6 @@ pit stops, target-race incidents, or actual target-race weather.
 - Practice and qualifying lap programmes are not fully comparable.
 - Tyre degradation is a descriptive slope, not a race strategy simulation.
 - Grid position means the forecast is after qualifying.
-- Team, driver form, reliability, weather, and circuit-history features are
-  not yet implemented because their prediction-time sources must be wired
-  separately.
 - The first ranking layer is deterministic normalization, not yet a Bayesian
   full-order model.
 - P2/P3 probabilities and strategy-aware outcomes require the later simulator.

@@ -74,13 +74,21 @@ def draw(n: int, st: RaceState, a: Assumptions, seed: int = 0) -> dict:
     remaining = st.total_laps - st.lap + 1
     hazard = dict(a.sc_hazard_by_lap)
     if not hazard:
-        hazard = {lap: a.sc_prob_per_race_remaining for lap in range(1, remaining + 1)}
-    sc_start = sample_safety_car_starts(r, remaining, hazard, n)
+        if a.sc_prob_per_race_remaining <= 0:
+            hazard = {lap: 0.0 for lap in range(st.lap, st.total_laps + 1)}
+        else:
+            per_lap = 1.0 - (1.0 - a.sc_prob_per_race_remaining) ** (1.0 / remaining)
+            hazard = {
+                lap: per_lap for lap in range(st.lap, st.total_laps + 1)
+            }
+    sc_start = sample_safety_car_starts(
+        r, remaining, hazard, n, first_lap=st.lap
+    )
     return dict(
         deg_mult=np.exp(r.normal(0, a.deg_mult_sigma, (n, 4))) * a.deg_mult_scale,
         pit_loss=r.normal(a.pit_loss_mean, a.pit_loss_sd, (n, 3)),
         noise=r.normal(0, a.lap_noise_sd, (n, remaining)),
-        sc_start=np.where(sc_start >= 0, st.lap + sc_start - 1, -10**6))
+        sc_start=np.where(sc_start >= 0, sc_start, -10**6))
 
 
 def simulate(s: Strategy, st: RaceState, pace: ParametricPace, a: Assumptions, d: dict) -> np.ndarray:

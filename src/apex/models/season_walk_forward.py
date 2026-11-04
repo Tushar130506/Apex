@@ -6,8 +6,56 @@ import pandas as pd
 
 from apex.models.championship import forecast_championship
 from apex.models.walk_forward import make_walk_forward_model
-from apex.models.winner import race_probabilities
 from apex.models.race_monte_carlo import monte_carlo_race_probabilities
+
+
+RACE_SPECIFIC_COLUMNS = {
+    "fuel_corrected_median_lap_s",
+    "best_lap_time_s",
+    "pace_rank",
+    "pace_gap_to_best_s",
+    "best_lap_rank",
+    "best_lap_gap_to_best_s",
+    "degradation_s_per_lap",
+    "valid_laps",
+    "session_count",
+    "grid_position",
+    "grid_rank",
+    "grid_gap_to_pole",
+    "practice_median_lap_s",
+    "practice_best_lap_s",
+    "practice_pace_rank",
+    "practice_gap_to_best_s",
+    "qualifying_median_lap_s",
+    "qualifying_best_lap_s",
+    "qualifying_pace_rank",
+    "qualifying_gap_to_best_s",
+    "has_practice_data",
+    "has_qualifying_data",
+    "practice_track_temp",
+    "practice_air_temp",
+    "practice_wet_lap_fraction",
+}
+
+
+def _cutoff_future_features(
+    target: pd.DataFrame, completed: pd.DataFrame, model_columns: list[str]
+) -> pd.DataFrame:
+    """Replace future-race evidence with state known at the forecast cutoff."""
+    result = target.copy()
+    latest = (
+        completed.sort_values("_race_order")
+        .drop_duplicates("driver", keep="last")
+        .set_index("driver")
+    )
+    result["team"] = result["driver"].map(latest["team"]).fillna("UNKNOWN")
+    for column in model_columns:
+        if column in RACE_SPECIFIC_COLUMNS:
+            result[column] = np.nan
+            continue
+        if column in latest:
+            result[column] = result["driver"].map(latest[column])
+    return result
 
 
 def _race_order(frame: pd.DataFrame) -> pd.Series:
@@ -85,17 +133,13 @@ def expanding_season_predictions(
             ],
             ignore_index=True,
         )
-        completed_with_points = completed_after[
-            completed_after["season"].eq(championship_season)
-        ][
-            ["race_id", "driver", "team", "finish_position", "points"]
-        ].copy()
         completed_season = completed_after[
             completed_after["season"].eq(championship_season)
         ]
-        completed_with_points["classified"] = completed_season.get(
-            "classified", completed_season["winner"].eq(1)
-        )
+        completed_columns = ["race_id", "driver", "team", "points"]
+        if "classified" in completed_season:
+            completed_columns.extend(["finish_position", "classified"])
+        completed_with_points = completed_season[completed_columns].copy()
         completed_with_points["team"] = (
             completed_with_points["team"]
             .replace({"None": pd.NA, "nan": pd.NA})
@@ -106,21 +150,18 @@ def expanding_season_predictions(
             & frame["season"].eq(championship_season)
         ].copy()
         if not future_predictions.empty:
+            future_predictions = _cutoff_future_features(
+                future_predictions, completed_after, model_columns
+            )
             future_predictions["score"] = model.predict_proba(
                 future_predictions[model_columns]
             )[:, 1]
-            future_predictions["race_probability"] = monte_carlo_race_probabilities(
-                future_predictions,
-                future_predictions["score"].to_numpy(),
-                simulations=1000,
-                seed=seed + race_number,
-            )
             future_predictions = future_predictions[
-                ["race_id", "driver", "team", "score", "race_probability"]
+                ["race_id", "driver", "team", "score"]
             ]
         if future_predictions.empty:
             future_predictions = pd.DataFrame(
-                columns=["race_id", "driver", "team", "score", "race_probability"]
+                columns=["race_id", "driver", "team", "score"]
             )
         team_lookup = (
             completed_after.assign(

@@ -40,8 +40,12 @@ def replay_snapshots(laps: pd.DataFrame) -> pd.DataFrame:
                 "lap_no": int(lap_no),
                 "observed_drivers": int(latest["driver"].nunique()),
                 "pit_stops_observed": int(history["is_pit_lap"].sum()),
-                "safety_car_laps_observed": int(history["safety_car_lap"].sum()),
-                "neutralized_laps_observed": int(history["neutralized_lap"].sum()),
+                "safety_car_laps_observed": int(
+                    history.loc[history["safety_car_lap"], "lap_no"].nunique()
+                ),
+                "neutralized_laps_observed": int(
+                    history.loc[history["neutralized_lap"], "lap_no"].nunique()
+                ),
                 "current_compounds": latest.set_index("driver")["compound"].to_dict(),
                 "current_tyre_age": latest.set_index("driver")["tyre_age"].to_dict(),
                 "current_lap_time_s": latest.set_index("driver")["lap_time_s"].to_dict(),

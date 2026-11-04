@@ -28,6 +28,16 @@ from apex.models.walk_forward import make_walk_forward_model
 ROOT = Path(__file__).parent
 PROCESSED = ROOT / "data" / "processed"
 
+
+def _race_order(race_id: str) -> int:
+    match = re.fullmatch(r"(\d{4})_(\d+)", str(race_id))
+    if match is None:
+        raise ValueError(
+            f"race_id must have the form YYYY_round; received {race_id!r}"
+        )
+    return int(match.group(1)) * 100 + int(match.group(2))
+
+
 st.set_page_config(
     page_title="APEX Race Intelligence",
     page_icon="🏁",
@@ -69,7 +79,9 @@ def load_predictions() -> pd.DataFrame:
 
 
 @st.cache_data(show_spinner="Loading official results...")
-def load_results() -> pd.DataFrame:
+def load_results(
+    result_signature: tuple[tuple[str, int], ...] = (),
+) -> pd.DataFrame:
     paths = sorted(PROCESSED.glob("race_results*.parquet"))
     frames = [pd.read_parquet(path) for path in paths]
     return pd.concat(frames, ignore_index=True).drop_duplicates(
@@ -144,7 +156,7 @@ def build_model_inputs(
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
     """Build features once; target outcomes are not used in feature construction."""
     lap_data = load_processed()
-    result_data = load_results()
+    result_data = load_results(result_signature)
     features = build_pre_race_features(lap_data)
     safety = build_race_safety_summary(lap_data)
     features = attach_prior_safety_features(features, safety)
@@ -163,22 +175,25 @@ def predict_on_demand(
     target = features[features["race_id"].eq(target_race_id)].copy()
     if target.empty:
         return pd.DataFrame()
-    target_order = int(target_race_id.split("_")[0]) * 100 + int(target_race_id.split("_")[1])
-    training = labeled[
-        labeled["race_id"].astype(str).map(
-            lambda value: int(value.split("_")[0]) * 100 + int(value.split("_")[1])
-        ) < target_order
-    ].copy()
+    target_order = _race_order(target_race_id)
+    training = (
+        labeled[
+            labeled["race_id"].map(_race_order) < target_order
+        ].copy()
+        if "race_id" in labeled
+        else pd.DataFrame()
+    )
     if training.empty:
         return pd.DataFrame()
 
     # Historical form may only use results before the target race. Grid and
     # team are pre-race facts, so use them only for the target race itself.
-    result_data = load_results()
-    target_order_values = result_data["race_id"].astype(str).map(
-        lambda value: int(value.split("_")[0]) * 100 + int(value.split("_")[1])
-    )
-    prior_results = result_data.loc[target_order_values < target_order].copy()
+    result_data = load_results(result_signature)
+    if "race_id" in result_data:
+        target_order_values = result_data["race_id"].map(_race_order)
+        prior_results = result_data.loc[target_order_values < target_order].copy()
+    else:
+        prior_results = pd.DataFrame()
     target_result = result_data[result_data["race_id"].eq(target_race_id)].copy()
     if not target_result.empty:
         target = target.merge(
@@ -213,26 +228,20 @@ def predict_future_circuit(
 ) -> pd.DataFrame:
     """Forecast a future circuit from prior circuit data and current form."""
     features, labeled = build_model_inputs(lap_signature, result_signature)
-    result_data = load_results()
+    result_data = load_results(result_signature)
     season_results = result_data[result_data["season"].eq(season)].copy()
     if season_results.empty:
         return pd.DataFrame()
-    current_order = season_results["race_id"].astype(str).map(
-        lambda value: int(value.split("_")[0]) * 100 + int(value.split("_")[1])
-    ).max()
+    current_order = season_results["race_id"].map(_race_order).max()
     target_order = current_order + 1
     target_race_id = f"{season}_24" if season == 2026 and circuit == "Abu Dhabi Grand Prix" else f"{season}_{target_order % 100}"
     current_drivers = season_results[
-        season_results["race_id"].astype(str).map(
-            lambda value: int(value.split("_")[0]) * 100 + int(value.split("_")[1])
-        ).eq(current_order)
+        season_results["race_id"].map(_race_order).eq(current_order)
     ][["driver", "team"]].drop_duplicates("driver")
     circuit_rows = features[features["track"].eq(circuit)].copy()
     if circuit_rows.empty:
         return pd.DataFrame()
-    circuit_rows["_order"] = circuit_rows["race_id"].astype(str).map(
-        lambda value: int(value.split("_")[0]) * 100 + int(value.split("_")[1])
-    )
+    circuit_rows["_order"] = circuit_rows["race_id"].map(_race_order)
     circuit_rows = circuit_rows.sort_values("_order").drop_duplicates("driver", keep="last")
     fallback = features[features["race_id"].eq(f"{season}_{current_order % 100}")].copy()
     target = current_drivers.merge(
@@ -262,16 +271,16 @@ def predict_future_circuit(
     target["grid_rank"] = float("nan")
     target["grid_gap_to_pole"] = float("nan")
     prior_results = result_data[
-        result_data["race_id"].astype(str).map(
-            lambda value: int(value.split("_")[0]) * 100 + int(value.split("_")[1])
-        ).lt(current_order + 1)
+        result_data["race_id"].map(_race_order).lt(current_order + 1)
     ].copy()
     target = attach_historical_features(target, prior_results)
-    training = labeled[
-        labeled["race_id"].astype(str).map(
-            lambda value: int(value.split("_")[0]) * 100 + int(value.split("_")[1])
-        ).lt(current_order + 1)
-    ]
+    training = (
+        labeled[
+            labeled["race_id"].map(_race_order).lt(current_order + 1)
+        ]
+        if "race_id" in labeled
+        else pd.DataFrame()
+    )
     if training.empty:
         return pd.DataFrame()
     model = make_walk_forward_model()
@@ -351,11 +360,11 @@ if laps.empty:
     st.stop()
 
 predictions = load_predictions()
-results = load_results()
-wdc_forecast, wcc_forecast, forecast_source = load_championship_forecast()
-comparison = load_model_comparison()
 result_files = sorted(PROCESSED.glob("race_results*.parquet"))
 result_signature = tuple((str(path), path.stat().st_mtime_ns) for path in result_files)
+results = load_results(result_signature)
+wdc_forecast, wcc_forecast, forecast_source = load_championship_forecast()
+comparison = load_model_comparison()
 laps = laps.copy()
 laps["session_type"] = laps["session_id"].map(_session_type)
 laps["valid"] = laps["valid"].fillna(False).astype(bool)
@@ -386,9 +395,14 @@ with st.sidebar:
     track = st.selectbox("Circuit", track_options)
     track_laps = season_laps[season_laps["track"].eq(track)]
     if track == "Abu Dhabi Grand Prix" and track_laps.empty:
-        driver_options = sorted(
-            results[results["season"].eq(season)]["driver"].dropna().astype(str).unique()
+        season_result_rows = (
+            results[results["season"].eq(season)]
+            if "season" in results
+            else pd.DataFrame()
         )
+        driver_options = sorted(
+            season_result_rows["driver"].dropna().astype(str).unique()
+        ) if "driver" in season_result_rows else []
     else:
         driver_options = sorted(track_laps["driver"].dropna().astype(str).unique())
     driver = st.selectbox("Driver", driver_options)
@@ -424,9 +438,14 @@ on_demand_prediction = (
     else pd.DataFrame()
 )
 prediction_probability = _probability_column(predictions)
-selected_prediction = predictions[
-    predictions["season"].eq(season) & predictions["track"].eq(track)
-].copy()
+if {"season", "track", "driver"} <= set(predictions.columns):
+    selected_prediction = predictions[
+        predictions["season"].eq(season) & predictions["track"].eq(track)
+    ].copy()
+else:
+    selected_prediction = pd.DataFrame(
+        columns=["season", "track", "driver", "race_probability"]
+    )
 if not selected_prediction.empty:
     selected_prediction["display_probability"] = _effective_probability(selected_prediction)
 selected_driver_prediction = selected_prediction[selected_prediction["driver"].eq(driver)].copy()
@@ -554,7 +573,11 @@ with tabs[0]:
 
 with tabs[1]:
     st.header(f"Championship · {season}")
-    season_results = results[results["season"].eq(season)].copy()
+    season_results = (
+        results[results["season"].eq(season)].copy()
+        if "season" in results
+        else pd.DataFrame()
+    )
     if season_results.empty:
         st.info("No official championship results are available for this season.")
     else:
@@ -620,7 +643,11 @@ with tabs[1]:
 
 with tabs[2]:
     st.header(f"Model comparison · {season}")
-    selected_comparison = comparison[comparison["season"].eq(season)].copy()
+    selected_comparison = (
+        comparison[comparison["season"].eq(season)].copy()
+        if "season" in comparison
+        else pd.DataFrame()
+    )
     if selected_comparison.empty:
         st.info("No walk-forward comparison artifact is available yet.")
     else:
@@ -697,28 +724,51 @@ with tabs[3]:
         chart_columns = st.columns(2)
         with chart_columns[0]:
             st.subheader("Tyre age and pace")
-            tyre = valid_driver_laps[["lap_no", "tyre_age", "lap_time_s"]].dropna().sort_values("lap_no")
-            st.line_chart(tyre.set_index("lap_no")[["lap_time_s", "tyre_age"]], y_label="Value")
+            tyre = valid_driver_laps[
+                ["session_id", "lap_no", "tyre_age", "lap_time_s"]
+            ].dropna().sort_values(["session_id", "lap_no"])
+            tyre["session"] = tyre["session_id"].str.replace(r"^.*_", "", regex=True)
+            tyre_chart = tyre.pivot_table(
+                index="lap_no", columns="session", values=["lap_time_s", "tyre_age"], aggfunc="median"
+            )
+            tyre_chart.columns = [
+                f"{metric} · {session}" for metric, session in tyre_chart.columns
+            ]
+            st.line_chart(tyre_chart, y_label="Value")
         with chart_columns[1]:
             st.subheader("Fuel and weather")
             weather_columns = [column for column in ("fuel_kg", "track_temp", "air_temp") if column in driver_laps]
-            weather = driver_laps.sort_values("lap_no").drop_duplicates(["session_id", "lap_no"])
+            weather = driver_laps.sort_values(["session_id", "lap_no"]).drop_duplicates(
+                ["session_id", "lap_no"]
+            ).copy()
+            weather["session"] = weather["session_id"].str.replace(r"^.*_", "", regex=True)
             if weather_columns:
-                st.line_chart(weather.set_index("lap_no")[weather_columns], y_label="Recorded / estimated value")
+                weather_chart = weather.pivot_table(
+                    index="lap_no", columns="session", values=weather_columns, aggfunc="median"
+                )
+                weather_chart.columns = [
+                    f"{metric} · {session}" for metric, session in weather_chart.columns
+                ]
+                st.line_chart(weather_chart, y_label="Recorded / estimated value")
             else:
                 st.info("Fuel and weather fields are not available.")
 
         st.subheader("Telemetry summary by session")
+        summary_agg = {
+            "laps": ("lap_no", "count"),
+            "valid_laps": ("valid", "sum"),
+            "best_lap_s": ("lap_time_s", "min"),
+            "median_lap_s": ("lap_time_s", "median"),
+            "compounds": ("compound", "nunique"),
+        }
+        if "track_status" in driver_laps:
+            summary_agg["non_green_lap_fraction"] = (
+                "track_status",
+                lambda values: (values.astype(str) != "1").mean(),
+            )
         summary = (
             driver_laps.groupby(["session_type", "session_id"], as_index=False)
-            .agg(
-                laps=("lap_no", "count"),
-                valid_laps=("valid", "sum"),
-                best_lap_s=("lap_time_s", "min"),
-                median_lap_s=("lap_time_s", "median"),
-                compounds=("compound", "nunique"),
-                wet_lap_fraction=("track_status", lambda values: (values.astype(str) != "1").mean()),
-            )
+            .agg(**summary_agg)
             .sort_values("session_id")
         )
         st.dataframe(summary, use_container_width=True, hide_index=True)

@@ -32,13 +32,19 @@ def monte_carlo_race_probabilities(
         errors="coerce",
     ).fillna(0.05).to_numpy(float)
     if degradation_model is not None and {"compound", "tyre_age"} <= set(data.columns):
-        degradation = np.asarray(
-            [
-                degradation_model.loss(compound, age)
-                for compound, age in zip(data["compound"], data["tyre_age"])
-            ],
-            dtype=float,
-        )
+        model_degradation = []
+        for compound, age, fallback_rate in zip(
+            data["compound"], data["tyre_age"], degradation
+        ):
+            if pd.isna(compound) or pd.isna(age):
+                model_degradation.append(fallback_rate)
+                continue
+            current_loss = degradation_model.loss(str(compound), float(age))
+            next_loss = degradation_model.loss(str(compound), float(age) + 1.0)
+            rate = float(np.asarray(next_loss - current_loss))
+            model_degradation.append(rate if np.isfinite(rate) else fallback_rate)
+        degradation = np.asarray(model_degradation, dtype=float)
+    degradation = np.where(np.isfinite(degradation), degradation, 0.05)
     fuel_sensitivity = pd.to_numeric(
         data.get(
             "fuel_sensitivity_s_per_kg",

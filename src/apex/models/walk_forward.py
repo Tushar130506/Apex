@@ -8,15 +8,26 @@ from apex.features.winner_features import MODEL_COLUMNS, validate_race_targets
 from apex.models.calibration import calibrated_race_probabilities
 from apex.models.overfit import diagnose_fit
 from apex.models.race_monte_carlo import monte_carlo_race_probabilities
-from apex.models.winner import _race_metrics, race_probabilities
+from apex.models.winner import _race_metrics
 
 
 def _baseline_accuracy(data: pd.DataFrame, column: str, ascending: bool) -> float | None:
-    if column not in data or data[column].notna().groupby(data["race_id"]).sum().eq(0).all():
+    if column not in data:
+        return None
+    available = data[column].notna()
+    if column == "grid_position":
+        available &= pd.to_numeric(data[column], errors="coerce").gt(0)
+    if available.groupby(data["race_id"]).sum().eq(0).all():
         return None
     predicted = (
-        data.assign(_available=data[column].notna())
-        .sort_values(["race_id", "_available", column], ascending=[True, False, ascending])
+        data.assign(
+            _available=available,
+            _sort_value=pd.to_numeric(data[column], errors="coerce"),
+        )
+        .assign(_sort_value=lambda frame: frame["_sort_value"].where(
+            frame["_available"], np.inf if ascending else -np.inf
+        ))
+        .sort_values(["race_id", "_available", "_sort_value"], ascending=[True, False, ascending])
         .groupby("race_id")
         .head(1)
     )
@@ -26,13 +37,13 @@ def _baseline_accuracy(data: pd.DataFrame, column: str, ascending: bool) -> floa
 def _calibrated_race_probabilities(
     training: pd.DataFrame,
     target: pd.DataFrame,
-    scores: np.ndarray,
+    probabilities: np.ndarray,
     prior_scores: list[np.ndarray],
     prior_targets: list[np.ndarray],
 ) -> np.ndarray:
     """Calibrate only against outcomes from earlier walk-forward races."""
     if not prior_scores:
-        return race_probabilities(target, scores)
+        return probabilities
     history = pd.DataFrame(
         {
             "race_id": [
@@ -43,7 +54,7 @@ def _calibrated_race_probabilities(
             "winner": np.concatenate(prior_targets),
         }
     )
-    return calibrated_race_probabilities(history, target, scores)
+    return calibrated_race_probabilities(history, target, probabilities)
 
 
 def _race_order(frame: pd.DataFrame) -> pd.Series:
@@ -97,13 +108,17 @@ def walk_forward_predictions(
             prior_scores,
             prior_targets,
         )
-        target["predicted_position"] = (
-            target["race_probability"].rank(method="first", ascending=False).astype(int)
-        )
+        target["predicted_position"] = target["race_probability"].rank(
+            method="first", ascending=False
+        ).astype(int)
         target["training_races"] = int(training["race_id"].nunique())
         target["training_through_race"] = int(target_order - 1)
         predictions.append(target)
-        race_metrics = _race_metrics(target, target["score"].to_numpy())
+        race_metrics = _race_metrics(
+            target,
+            target["score"].to_numpy(),
+            probabilities=target["race_probability"].to_numpy(),
+        )
         race_metrics.update(
             {
                 "race_id": str(target["race_id"].iloc[0]),
@@ -132,7 +147,7 @@ def walk_forward_predictions(
             }
         )
         metrics.append(race_metrics)
-        prior_scores.append(target["score"].to_numpy())
+        prior_scores.append(target["race_probability"].to_numpy())
         prior_targets.append(target["winner"].to_numpy())
     return (
         pd.concat(predictions, ignore_index=True).drop(columns="_race_order"),

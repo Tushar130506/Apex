@@ -21,6 +21,12 @@ def main() -> None:
     parser.add_argument("--simulations", type=int, default=5000)
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument(
+        "--season",
+        type=int,
+        default=None,
+        help="Filter completed and future races to this season before applying --as-of-race",
+    )
+    parser.add_argument(
         "--as-of-race",
         type=int,
         default=None,
@@ -30,6 +36,13 @@ def main() -> None:
 
     completed = pd.read_parquet(args.completed)
     future = pd.read_parquet(args.future_predictions)
+    if args.season is not None:
+        completed = completed[
+            completed["race_id"].astype(str).str.startswith(f"{args.season}_")
+        ].copy()
+        future = future[
+            future["race_id"].astype(str).str.startswith(f"{args.season}_")
+        ].copy()
     if "team" in future and future["team"].astype(str).str.strip().isin({"", "None", "nan"}).any():
         team_lookup = (
             completed[["race_id", "driver", "team"]]

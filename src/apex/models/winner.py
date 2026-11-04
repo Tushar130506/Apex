@@ -11,13 +11,17 @@ from apex.features.winner_features import MODEL_COLUMNS, validate_race_targets
 from apex.models.overfit import diagnose_fit
 
 
-def race_probabilities(data: pd.DataFrame, scores: np.ndarray) -> np.ndarray:
+def race_probabilities(
+    data: pd.DataFrame, scores: np.ndarray, *, temperature: float = 1.0
+) -> np.ndarray:
     """Normalize driver scores into mutually exclusive race-win probabilities."""
     if len(data) != len(scores):
         raise ValueError("data and scores must have the same length")
+    if temperature <= 0:
+        raise ValueError("temperature must be greater than zero")
     probabilities = np.empty(len(scores), dtype=float)
     clipped = np.clip(np.asarray(scores, dtype=float), 1e-7, 1 - 1e-7)
-    strengths = np.log(clipped / (1.0 - clipped))
+    strengths = np.log(clipped / (1.0 - clipped)) / temperature
     frame = data[["race_id"]].reset_index(drop=True)
     for _, positions in frame.groupby("race_id", sort=False).groups.items():
         indexes = np.asarray(list(positions), dtype=int)
@@ -43,13 +47,22 @@ def _calibration_error(probabilities: np.ndarray, targets: np.ndarray, bins: int
     return float(error)
 
 
-def _race_metrics(data: pd.DataFrame, scores: np.ndarray) -> dict:
+def _race_metrics(
+    data: pd.DataFrame,
+    scores: np.ndarray,
+    *,
+    probabilities: np.ndarray | None = None,
+) -> dict:
     columns = ["race_id", "winner"]
     if "driver" in data.columns:
         columns.append("driver")
     scored = data[columns].copy().reset_index(drop=True)
     scored["score"] = np.asarray(scores, dtype=float)
-    scored["race_probability"] = race_probabilities(scored, scored["score"].to_numpy())
+    scored["race_probability"] = (
+        race_probabilities(scored, scored["score"].to_numpy())
+        if probabilities is None
+        else np.asarray(probabilities, dtype=float)
+    )
     winners = scored.loc[scored.groupby("race_id")["race_probability"].idxmax()]
     actual = scored.loc[scored["winner"].eq(1)].set_index("race_id")
     actual_probability = actual["race_probability"].clip(1e-12, 1.0)

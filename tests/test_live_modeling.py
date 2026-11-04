@@ -2,6 +2,7 @@ from datetime import datetime
 
 import numpy as np
 import pandas as pd
+import pytest
 
 from apex.features.tyre_degradation import CompoundDegradation
 from apex.ingestion.live_timing import LiveRaceState, TimingEvent
@@ -24,7 +25,7 @@ def test_monte_carlo_probabilities_sum_to_one():
     probabilities = monte_carlo_race_probabilities(
         data, np.array([0.6, 0.3, 0.1]), simulations=300, seed=2
     )
-    assert probabilities.sum() == 1
+    assert probabilities.sum() == pytest.approx(1.0)
     assert probabilities[0] > probabilities[2]
 
 

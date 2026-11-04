@@ -165,9 +165,17 @@ def build_pre_race_features(laps: pd.DataFrame, fuel_s_per_kg: float = 0.032) ->
             result[median_column] - result.groupby("race_id")[median_column].transform("min")
         )
         result[f"has_{category}_data"] = result[median_column].notna().astype(int)
+    practice = clean[clean["session_type"].str.startswith("Practice")].copy()
+    wet_signal = practice["compound"].astype(str).str.upper().isin({"INTERMEDIATE", "WET"})
+    for column in ("rainfall", "rainfall_mm", "is_wet", "wet"):
+        if column in practice:
+            values = practice[column]
+            wet_signal = wet_signal | (
+                values.astype(bool) if values.dtype == bool
+                else pd.to_numeric(values, errors="coerce").fillna(0).gt(0)
+            )
     practice_weather = (
-        clean[clean["session_type"].str.startswith("Practice")]
-        .assign(wet_lap=lambda frame: frame["track_status"].astype(str).str.contains(r"[4567]"))
+        practice.assign(wet_lap=wet_signal)
         .groupby(group, dropna=False)
         .agg(
             practice_track_temp=("track_temp", "mean"),
@@ -177,36 +185,8 @@ def build_pre_race_features(laps: pd.DataFrame, fuel_s_per_kg: float = 0.032) ->
         .reset_index()
     )
     result = result.merge(practice_weather, on=group, how="left")
-    race_laps = data[data["session_type"].eq("Race")].copy()
-    if race_laps.empty:
-        result["prior_track_safety_car_lap_rate"] = np.nan
-        result["prior_track_neutralized_lap_rate"] = np.nan
-    else:
-        race_laps["race_order"] = race_laps["season"] * 100 + race_laps["race_id"].str.extract(
-            r"_(\d+)$"
-        )[0].astype(int)
-        race_laps["neutralized_lap"] = race_laps["track_status"].astype(str).str.contains(r"[4567]")
-        race_laps["safety_car_lap"] = race_laps["track_status"].astype(str).str.contains(r"[46]")
-        race_summary = (
-            race_laps.groupby(["race_id", "race_order", "track"], dropna=False)
-            .agg(
-                safety_car_lap_rate=("safety_car_lap", "mean"),
-                neutralized_lap_rate=("neutralized_lap", "mean"),
-            )
-            .reset_index()
-            .sort_values("race_order")
-        )
-        prior = []
-        for _, row in result.iterrows():
-            earlier = race_summary[
-                (race_summary["track"].eq(row["track"]))
-                & (race_summary["race_order"] < row["season"] * 100 + int(row["race_id"].split("_")[-1]))
-            ]
-            prior.append({
-                "prior_track_safety_car_lap_rate": earlier["safety_car_lap_rate"].mean(),
-                "prior_track_neutralized_lap_rate": earlier["neutralized_lap_rate"].mean(),
-            })
-        result = pd.concat([result.reset_index(drop=True), pd.DataFrame(prior)], axis=1)
+    result["prior_track_safety_car_lap_rate"] = np.nan
+    result["prior_track_neutralized_lap_rate"] = np.nan
     result["feature_quality"] = np.where(result["valid_laps"] >= 5, "usable", "sparse")
     return result.sort_values(["race_id", "driver"]).reset_index(drop=True)
 
@@ -341,7 +321,8 @@ def attach_historical_features(data: pd.DataFrame, results: pd.DataFrame) -> pd.
                 (history[column].eq(row[column]))
                 & (history["race_order"] < row["race_order"])
             ].sort_values("race_order")
-            recent = prior.tail(5)
+            recent_orders = prior["race_order"].drop_duplicates().tail(5)
+            recent = prior[prior["race_order"].isin(recent_orders)]
             values.append({
                 f"{entity}_recent_mean_finish": recent["finish_value"].mean(),
                 f"{entity}_form_score": recent["form_value"].mean(),
@@ -369,7 +350,9 @@ def attach_grid_features(features: pd.DataFrame, results: pd.DataFrame) -> pd.Da
     missing = required - set(results.columns)
     if missing:
         raise ValueError(f"results missing required columns: {sorted(missing)}")
-    grid = results[["race_id", "driver", "grid_position"]]
+    grid = results[["race_id", "driver", "grid_position"]].copy()
+    grid["grid_position"] = pd.to_numeric(grid["grid_position"], errors="coerce")
+    grid["grid_position"] = grid["grid_position"].where(grid["grid_position"].gt(0))
     joined = features.drop(
         columns=["grid_position", "grid_rank", "grid_gap_to_pole"],
         errors="ignore",

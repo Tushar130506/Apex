@@ -38,8 +38,17 @@ def main() -> None:
                 for _, row in session.results.iterrows():
                     position = pd.to_numeric(row.get("Position"), errors="coerce")
                     grid = pd.to_numeric(row.get("GridPosition"), errors="coerce")
+                    classified_position = pd.to_numeric(
+                        row.get("ClassifiedPosition"), errors="coerce"
+                    )
                     status = str(row.get("Status", ""))
                     disqualified = "disqual" in status.lower()
+                    classified = status == "Finished" or pd.notna(classified_position)
+                    points = points_for_position(
+                        position,
+                        classified=classified,
+                        disqualified=disqualified,
+                    )
                     rows.append({
                         "race_id": f"{year}_{round_number}",
                         "season": year,
@@ -47,15 +56,9 @@ def main() -> None:
                         "driver": str(row["Abbreviation"]),
                         "finish_position": position,
                         "grid_position": grid,
-                        "classified": status == "Finished" or pd.notna(row.get("ClassifiedPosition")),
-                        "points": points_for_position(
-                            position, classified=(status == "Finished" or pd.notna(row.get("ClassifiedPosition"))),
-                            disqualified=disqualified,
-                        ),
-                        "derived_points": points_for_position(
-                            position, classified=(status == "Finished" or pd.notna(row.get("ClassifiedPosition"))),
-                            disqualified=disqualified,
-                        ),
+                        "classified": classified,
+                        "points": points,
+                        "derived_points": points,
                         "event_type": "race",
                         "status": status,
                         "team": str(row.get("TeamName", row.get("Team", "UNKNOWN"))),

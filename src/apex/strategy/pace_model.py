@@ -21,8 +21,10 @@ class ParametricPace:
         age_array = np.asarray(age)
         return (
             self.offset[compound]
-            + self.deg[compound] * age_array * deg_mult
-            + self.deg_quad.get(compound, 0.001) * age_array**2
+            + (
+                self.deg[compound] * age_array
+                + self.deg_quad.get(compound, 0.0) * age_array**2
+            ) * deg_mult
             + self.fuel_s_per_kg * fuel_kg
         )
 
@@ -44,6 +46,7 @@ class ParametricPace:
         coef = dict(zip(names, beta[sess.shape[1]:]))
         return cls(offset={"SOFT": coef[("offset", "SOFT")], "MEDIUM": 0.0, "HARD": coef[("offset", "HARD")]},
                    deg={c: float(coef[("deg", c)]) for c in DRY}, fuel_s_per_kg=float(coef[("fuel", "")]),
+                   deg_quad={c: 0.0 for c in DRY},
                    burn_kg_per_lap=burn_kg_per_lap, fit_provenance=f"fit:{d['source'].iloc[0]}:{d['session_id'].nunique()}sessions")
 
     def estimate_base(self, recent: pd.DataFrame) -> float:

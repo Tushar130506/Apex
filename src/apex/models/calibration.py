@@ -19,7 +19,7 @@ def select_temperature(
     losses = {}
     for temperature in grid:
         probabilities = race_probabilities(
-            history, history[score_column].to_numpy(float) / temperature
+            history, history[score_column].to_numpy(float), temperature=temperature
         )
         actual = history["winner"].to_numpy(bool)
         winners = probabilities[actual]
@@ -32,4 +32,6 @@ def calibrated_race_probabilities(
 ) -> np.ndarray:
     """Apply chronological temperature calibration to target scores."""
     temperature = select_temperature(history)
-    return race_probabilities(target, np.asarray(scores, dtype=float) / temperature)
+    return race_probabilities(
+        target, np.asarray(scores, dtype=float), temperature=temperature
+    )

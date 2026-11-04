@@ -66,19 +66,27 @@ def _strengths(group: pd.DataFrame, temperature: float) -> np.ndarray:
 
 
 def _sample_order(
-    group: pd.DataFrame, rng: np.random.Generator, temperature: float
+    group: pd.DataFrame,
+    rng: np.random.Generator,
+    temperature: float,
+    simulations: int = 1,
 ) -> np.ndarray:
     """Sample a Plackett-Luce order without replacing drivers."""
+    if simulations < 1:
+        raise ValueError("simulations must be positive")
     drivers = group["driver"].to_numpy()
-    remaining = np.arange(len(group))
     strengths = _strengths(group, temperature)
-    order: list[int] = []
-    while len(remaining):
-        weights = strengths[remaining]
-        selected = int(rng.choice(len(remaining), p=weights / weights.sum()))
-        order.append(int(remaining[selected]))
-        remaining = np.delete(remaining, selected)
-    return drivers[np.asarray(order, dtype=int)]
+    log_strengths = np.log(np.maximum(strengths, 1e-12))
+    available = np.ones((simulations, len(drivers)), dtype=bool)
+    order_indices = np.empty((simulations, len(drivers)), dtype=int)
+    for position in range(len(drivers)):
+        gumbels = rng.gumbel(size=(simulations, len(drivers)))
+        scores = np.where(available, log_strengths + gumbels, -np.inf)
+        selected = scores.argmax(axis=1)
+        order_indices[:, position] = selected
+        available[np.arange(simulations), selected] = False
+    orders = drivers[order_indices]
+    return orders[0] if simulations == 1 else orders
 
 
 def _points_for_order(order: Iterable[str]) -> dict[str, float]:
@@ -146,15 +154,25 @@ def forecast_championship(
     }
     rng = np.random.default_rng(seed)
     future_groups = [group for _, group in future.groupby("race_id", sort=True)]
+    sampled_orders = [
+        _sample_order(group, rng, temperature, simulations=simulations)
+        for group in future_groups
+    ]
 
     for simulation in range(simulations):
         points = {driver: float(base_driver.get(driver, 0.0)) for driver in drivers}
         teams = {team: float(base_team.get(team, 0.0)) for team in constructor_points}
-        for group in future_groups:
-            order = _sample_order(group, rng, temperature)
+        for group, sampled_group_orders in zip(future_groups, sampled_orders):
+            order = sampled_group_orders[simulation]
+            future_team_by_driver = (
+                group.dropna(subset=["driver", "team"])
+                .drop_duplicates("driver")
+                .set_index("driver")["team"]
+                .to_dict()
+            )
             for driver, earned in _points_for_order(order).items():
                 points[driver] = points.get(driver, 0.0) + earned
-                team = team_by_driver.get(driver)
+                team = future_team_by_driver.get(driver, team_by_driver.get(driver))
                 if team is not None:
                     teams[team] = teams.get(team, 0.0) + earned
         driver_points[simulation] = [points[driver] for driver in drivers]
@@ -166,7 +184,12 @@ def forecast_championship(
             "driver": drivers,
             "current_points": [base_driver.get(driver, 0.0) for driver in drivers],
             "expected_final_points": driver_points.mean(axis=0),
-            "win_probability": (driver_points == driver_points.max(axis=1, keepdims=True)).mean(axis=0),
+            "win_probability": (
+                (driver_points == driver_points.max(axis=1, keepdims=True))
+                / (driver_points == driver_points.max(axis=1, keepdims=True)).sum(
+                    axis=1, keepdims=True
+                )
+            ).mean(axis=0),
             "top_three_probability": (
                 driver_points.argsort(axis=1)[:, -3:, None]
                 == np.arange(len(drivers))[None, None, :]
@@ -181,7 +204,12 @@ def forecast_championship(
             "team": teams,
             "current_points": [base_team.get(team, 0.0) for team in teams],
             "expected_final_points": team_matrix.mean(axis=0),
-            "win_probability": (team_matrix == team_matrix.max(axis=1, keepdims=True)).mean(axis=0),
+            "win_probability": (
+                (team_matrix == team_matrix.max(axis=1, keepdims=True))
+                / (team_matrix == team_matrix.max(axis=1, keepdims=True)).sum(
+                    axis=1, keepdims=True
+                )
+            ).mean(axis=0),
         }
     ).sort_values(["win_probability", "expected_final_points"], ascending=False)
     return ChampionshipForecast(

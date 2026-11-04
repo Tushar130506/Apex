@@ -145,8 +145,10 @@ The model now produces mutually exclusive within-race probabilities and
 reports log loss, Brier score, and calibration error. It is not yet a fully
 calibrated probability model:
 
-1. The probability transform is a deterministic softmax of classifier
-   log-odds, not validation-only Platt or isotonic calibration.
+1. The primary race probability is the winner frequency from the integrated
+   Monte Carlo race simulation, which samples adjusted race outcomes after
+   tyre, fuel, and safety-car uncertainty. The classifier softmax remains the
+   unadjusted diagnostic baseline.
 2. The exploratory online calibration layer is fitted only from earlier
    walk-forward races, but it is unstable with this small rolling sample:
    its mean race log loss was 2.267 versus 0.860 for the uncalibrated
@@ -154,8 +156,9 @@ calibrated probability model:
    as the primary probability output.
 3. P2/P3 are ranking positions, not separately calibrated finish-position
    probabilities.
-4. There is no strategy-aware Monte Carlo layer for pit windows, safety-car
-   timing, or race-specific incidents.
+4. Strategy-aware Monte Carlo is available as a separate strategy analysis;
+   the winner model still uses aggregate tyre, fuel, and safety-car adjustments
+   rather than simulating every pit-window decision.
 5. Fuel mass remains estimated, not measured.
 6. The current cache has observed session weather, not a historical archive of
    pre-race weather forecasts.
