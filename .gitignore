@@ -6,3 +6,9 @@ __pycache__/
 *.pyc
 .fastf1-cache/
 mlruns/
+.pytest_cache/
+.kilo/
+src/apex.egg-info/
+fastf1_download_report.json
+fastf1_download_report.csv
+fastf1_materialize_failures.json

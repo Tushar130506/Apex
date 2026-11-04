@@ -8,6 +8,8 @@ import sys
 import pandas as pd
 
 sys.path.insert(0, "src")
+from apex.ingestion.fastf1_loader import _enable_cache
+from apex.models.points import points_for_position
 
 
 def main() -> None:
@@ -23,7 +25,7 @@ def main() -> None:
     args = parser.parse_args()
     import fastf1
 
-    fastf1.Cache.configure(cache_dir=args.cache_dir)
+    _enable_cache(args.cache_dir)
     rows = []
     failures = []
     for year in args.years:
@@ -36,6 +38,8 @@ def main() -> None:
                 for _, row in session.results.iterrows():
                     position = pd.to_numeric(row.get("Position"), errors="coerce")
                     grid = pd.to_numeric(row.get("GridPosition"), errors="coerce")
+                    status = str(row.get("Status", ""))
+                    disqualified = "disqual" in status.lower()
                     rows.append({
                         "race_id": f"{year}_{round_number}",
                         "season": year,
@@ -43,8 +47,18 @@ def main() -> None:
                         "driver": str(row["Abbreviation"]),
                         "finish_position": position,
                         "grid_position": grid,
-                        "classified": str(row.get("Status", "")) == "Finished" or pd.notna(row.get("ClassifiedPosition")),
-                        "points": float(row.get("Points", 0) or 0),
+                        "classified": status == "Finished" or pd.notna(row.get("ClassifiedPosition")),
+                        "points": points_for_position(
+                            position, classified=(status == "Finished" or pd.notna(row.get("ClassifiedPosition"))),
+                            disqualified=disqualified,
+                        ),
+                        "derived_points": points_for_position(
+                            position, classified=(status == "Finished" or pd.notna(row.get("ClassifiedPosition"))),
+                            disqualified=disqualified,
+                        ),
+                        "event_type": "race",
+                        "status": status,
+                        "team": str(row.get("TeamName", row.get("Team", "UNKNOWN"))),
                     })
             except Exception as error:
                 print(f"skip {year} round {round_number}: {error}")

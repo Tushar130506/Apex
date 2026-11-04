@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 
 from apex.models.degradation import stint_slopes
+from apex.models.points import derive_points
 
 
 SESSION_RE = re.compile(r"^fastf1_(?P<season>\d{4})_(?P<round>\d+)_(?P<session>.+)$")
@@ -21,6 +22,36 @@ MODEL_COLUMNS = [
     "degradation_s_per_lap",
     "valid_laps",
     "session_count",
+    "grid_position",
+    "grid_rank",
+    "grid_gap_to_pole",
+    "practice_median_lap_s",
+    "practice_best_lap_s",
+    "practice_pace_rank",
+    "practice_gap_to_best_s",
+    "qualifying_median_lap_s",
+    "qualifying_best_lap_s",
+    "qualifying_pace_rank",
+    "qualifying_gap_to_best_s",
+    "has_practice_data",
+    "has_qualifying_data",
+    "practice_track_temp",
+    "practice_air_temp",
+    "practice_wet_lap_fraction",
+    "driver_recent_mean_finish",
+    "driver_form_score",
+    "driver_finish_rate",
+    "driver_dnf_rate",
+    "team_recent_mean_finish",
+    "team_form_score",
+    "team_finish_rate",
+    "team_dnf_rate",
+    "driver_track_mean_finish",
+    "driver_track_start_count",
+    "team_track_mean_finish",
+    "team_track_start_count",
+    "prior_track_safety_car_lap_rate",
+    "prior_track_neutralized_lap_rate",
 ]
 
 
@@ -71,6 +102,42 @@ def build_pre_race_features(laps: pd.DataFrame, fuel_s_per_kg: float = 0.032) ->
         .reset_index()
     )
     result = result.merge(session_counts, on=group, how="left")
+    session_pace = clean.assign(
+        session_category=np.where(
+            clean["session_type"].str.startswith("Practice"),
+            "practice",
+            np.where(
+                clean["session_type"].isin({"Qualifying", "Sprint Qualifying", "Sprint Shootout"}),
+                "qualifying",
+                "other",
+            ),
+        )
+    )
+    session_pace = (
+        session_pace[session_pace["session_category"] != "other"]
+        .groupby(group + ["session_category"], dropna=False)
+        .agg(
+            session_median_lap_s=("fuel_corrected_lap_s", "median"),
+            session_best_lap_s=("lap_time_s", "min"),
+        )
+        .reset_index()
+    )
+    if not session_pace.empty:
+        session_pace = session_pace.pivot(
+            index=group,
+            columns="session_category",
+            values=["session_median_lap_s", "session_best_lap_s"],
+        )
+        session_pace.columns = [
+            f"{category}_{metric.removeprefix('session_')}"
+            for metric, category in session_pace.columns
+        ]
+        result = result.merge(session_pace.reset_index(), on=group, how="left")
+    for category in ("practice", "qualifying"):
+        for metric in ("median_lap_s", "best_lap_s"):
+            column = f"{category}_{metric}"
+            if column not in result:
+                result[column] = np.nan
     slopes = stint_slopes(clean, fuel_s_per_kg=fuel_s_per_kg)
     if slopes.empty:
         result["degradation_s_per_lap"] = np.nan
@@ -90,8 +157,117 @@ def build_pre_race_features(laps: pd.DataFrame, fuel_s_per_kg: float = 0.032) ->
     result["best_lap_gap_to_best_s"] = (
         result["best_lap_time_s"] - race_group["best_lap_time_s"].transform("min")
     )
+    for category in ("practice", "qualifying"):
+        median_column = f"{category}_median_lap_s"
+        best_column = f"{category}_best_lap_s"
+        result[f"{category}_pace_rank"] = result.groupby("race_id")[median_column].rank(method="min")
+        result[f"{category}_gap_to_best_s"] = (
+            result[median_column] - result.groupby("race_id")[median_column].transform("min")
+        )
+        result[f"has_{category}_data"] = result[median_column].notna().astype(int)
+    practice_weather = (
+        clean[clean["session_type"].str.startswith("Practice")]
+        .assign(wet_lap=lambda frame: frame["track_status"].astype(str).str.contains(r"[4567]"))
+        .groupby(group, dropna=False)
+        .agg(
+            practice_track_temp=("track_temp", "mean"),
+            practice_air_temp=("air_temp", "mean"),
+            practice_wet_lap_fraction=("wet_lap", "mean"),
+        )
+        .reset_index()
+    )
+    result = result.merge(practice_weather, on=group, how="left")
+    race_laps = data[data["session_type"].eq("Race")].copy()
+    if race_laps.empty:
+        result["prior_track_safety_car_lap_rate"] = np.nan
+        result["prior_track_neutralized_lap_rate"] = np.nan
+    else:
+        race_laps["race_order"] = race_laps["season"] * 100 + race_laps["race_id"].str.extract(
+            r"_(\d+)$"
+        )[0].astype(int)
+        race_laps["neutralized_lap"] = race_laps["track_status"].astype(str).str.contains(r"[4567]")
+        race_laps["safety_car_lap"] = race_laps["track_status"].astype(str).str.contains(r"[46]")
+        race_summary = (
+            race_laps.groupby(["race_id", "race_order", "track"], dropna=False)
+            .agg(
+                safety_car_lap_rate=("safety_car_lap", "mean"),
+                neutralized_lap_rate=("neutralized_lap", "mean"),
+            )
+            .reset_index()
+            .sort_values("race_order")
+        )
+        prior = []
+        for _, row in result.iterrows():
+            earlier = race_summary[
+                (race_summary["track"].eq(row["track"]))
+                & (race_summary["race_order"] < row["season"] * 100 + int(row["race_id"].split("_")[-1]))
+            ]
+            prior.append({
+                "prior_track_safety_car_lap_rate": earlier["safety_car_lap_rate"].mean(),
+                "prior_track_neutralized_lap_rate": earlier["neutralized_lap_rate"].mean(),
+            })
+        result = pd.concat([result.reset_index(drop=True), pd.DataFrame(prior)], axis=1)
     result["feature_quality"] = np.where(result["valid_laps"] >= 5, "usable", "sparse")
     return result.sort_values(["race_id", "driver"]).reset_index(drop=True)
+
+
+def build_race_safety_summary(laps: pd.DataFrame) -> pd.DataFrame:
+    """Summarize race-session safety-car conditions into a compact table."""
+    data = add_session_identity(laps)
+    race_laps = data[data["session_type"].eq("Race")].copy()
+    if race_laps.empty:
+        return pd.DataFrame(
+            columns=[
+                "race_id",
+                "track",
+                "race_order",
+                "safety_car_lap_rate",
+                "neutralized_lap_rate",
+            ]
+        )
+    race_laps["race_order"] = race_laps["season"] * 100 + race_laps["race_id"].str.extract(
+        r"_(\d+)$"
+    )[0].astype(int)
+    statuses = race_laps["track_status"].astype(str)
+    race_laps["neutralized_lap"] = statuses.str.contains(r"[4567]")
+    race_laps["safety_car_lap"] = statuses.str.contains(r"[46]")
+    return (
+        race_laps.groupby(["race_id", "race_order", "track"], dropna=False)
+        .agg(
+            safety_car_lap_rate=("safety_car_lap", "mean"),
+            neutralized_lap_rate=("neutralized_lap", "mean"),
+        )
+        .reset_index()
+    )
+
+
+def attach_prior_safety_features(
+    features: pd.DataFrame, safety_summary: pd.DataFrame
+) -> pd.DataFrame:
+    """Attach prior same-track safety history without target-race leakage."""
+    if safety_summary.empty:
+        return features
+    result = features.copy()
+    result["_race_order"] = (
+        result["season"] * 100
+        + result["race_id"].str.extract(r"_(\d+)$")[0].astype(int)
+    )
+    values = []
+    for _, row in result.iterrows():
+        prior = safety_summary[
+            (safety_summary["track"].eq(row["track"]))
+            & (safety_summary["race_order"] < row["_race_order"])
+        ]
+        values.append(
+            {
+                "prior_track_safety_car_lap_rate": prior["safety_car_lap_rate"].mean(),
+                "prior_track_neutralized_lap_rate": prior["neutralized_lap_rate"].mean(),
+            }
+        )
+    result[["prior_track_safety_car_lap_rate", "prior_track_neutralized_lap_rate"]] = (
+        pd.DataFrame(values, index=result.index)
+    )
+    return result.drop(columns="_race_order")
 
 
 def attach_race_results(features: pd.DataFrame, results: pd.DataFrame) -> pd.DataFrame:
@@ -100,11 +276,13 @@ def attach_race_results(features: pd.DataFrame, results: pd.DataFrame) -> pd.Dat
     missing = required - set(results.columns)
     if missing:
         raise ValueError(f"results missing required columns: {sorted(missing)}")
-    result_columns = ["race_id", "driver", "finish_position", "grid_position", "classified"]
-    for optional in ("points", "status"):
+    results = derive_points(results)
+    joined = attach_grid_features(features, results)
+    result_columns = ["race_id", "driver", "finish_position", "classified"]
+    for optional in ("points", "derived_points", "status", "team", "event_type"):
         if optional in results.columns:
             result_columns.append(optional)
-    joined = features.merge(
+    joined = joined.merge(
         results[result_columns],
         on=["race_id", "driver"],
         how="inner",
@@ -114,6 +292,91 @@ def attach_race_results(features: pd.DataFrame, results: pd.DataFrame) -> pd.Dat
         (joined["finish_position"] == 1)
         & joined["classified"].fillna(False)
     ).astype(int)
+    joined = attach_historical_features(joined, results)
+    return joined
+
+
+def attach_historical_features(data: pd.DataFrame, results: pd.DataFrame) -> pd.DataFrame:
+    """Attach only prior-race driver, team, and circuit history."""
+    frame = data.copy()
+    history = results.copy()
+    if "season" not in history:
+        history["season"] = history["race_id"].astype(str).str.extract(r"^(\d{4})$")[0]
+        history["season"] = history["season"].fillna(
+            history["race_id"].astype(str).str.extract(r"^(\d{4})_")[0]
+        ).astype(int)
+    if "track" not in history:
+        track_map = frame[["race_id", "track"]].drop_duplicates("race_id")
+        history = history.merge(track_map, on="race_id", how="left")
+    if "team" not in history:
+        history["team"] = "UNKNOWN"
+    history["team"] = history["team"].fillna("UNKNOWN").astype(str)
+    history["race_order"] = (
+        history["race_id"].astype(str).str.extract(r"_(\d+)$")[0].astype(int)
+        + history["season"].astype(int) * 100
+    )
+    history["classified_bool"] = history["classified"].fillna(False).astype(bool)
+    history["dnf"] = (~history["classified_bool"]).astype(int)
+    history["finish_value"] = pd.to_numeric(history["finish_position"], errors="coerce")
+    history["finish_value"] = history["finish_value"].where(history["finish_value"].gt(0))
+    history["form_value"] = 1.0 / history["finish_value"].clip(lower=1)
+    current = frame.merge(
+        history[["race_id", "driver", "team"]].drop_duplicates(["race_id", "driver"]),
+        on=["race_id", "driver"],
+        how="left",
+        suffixes=("", "_result"),
+    )
+    if "team_result" in current:
+        current["team"] = current["team"].fillna(current["team_result"])
+    current["team"] = current["team"].fillna("UNKNOWN")
+    current["race_order"] = (
+        current["race_id"].astype(str).str.extract(r"^(\d{4})_")[0].astype(int) * 100
+        + current["race_id"].astype(str).str.extract(r"_(\d+)$")[0].astype(int)
+    )
+    entity_specs = [("driver", "driver"), ("team", "team")]
+    for entity, column in entity_specs:
+        values = []
+        for _, row in current.iterrows():
+            prior = history[
+                (history[column].eq(row[column]))
+                & (history["race_order"] < row["race_order"])
+            ].sort_values("race_order")
+            recent = prior.tail(5)
+            values.append({
+                f"{entity}_recent_mean_finish": recent["finish_value"].mean(),
+                f"{entity}_form_score": recent["form_value"].mean(),
+                f"{entity}_finish_rate": (prior["classified_bool"].sum() + 1.0)
+                / (len(prior) + 2.0),
+                f"{entity}_dnf_rate": (prior["dnf"].sum() + 1.0)
+                / (len(prior) + 2.0),
+                f"{entity}_track_mean_finish": (
+                    prior[prior["track"].eq(row["track"])]["finish_value"].mean()
+                ),
+                f"{entity}_track_start_count": float(
+                    prior[prior["track"].eq(row["track"])]["finish_value"].count()
+                ),
+            })
+        current = pd.concat(
+            [current.reset_index(drop=True), pd.DataFrame(values)],
+            axis=1,
+        )
+    return current.drop(columns=["team_result", "race_order"], errors="ignore")
+
+
+def attach_grid_features(features: pd.DataFrame, results: pd.DataFrame) -> pd.DataFrame:
+    """Attach pre-race grid information without importing race outcomes."""
+    required = {"race_id", "driver", "grid_position"}
+    missing = required - set(results.columns)
+    if missing:
+        raise ValueError(f"results missing required columns: {sorted(missing)}")
+    grid = results[["race_id", "driver", "grid_position"]]
+    joined = features.drop(
+        columns=["grid_position", "grid_rank", "grid_gap_to_pole"],
+        errors="ignore",
+    ).merge(grid, on=["race_id", "driver"], how="left", validate="one_to_one")
+    grid_group = joined.groupby("race_id")["grid_position"]
+    joined["grid_rank"] = grid_group.rank(method="min")
+    joined["grid_gap_to_pole"] = joined["grid_position"] - grid_group.transform("min")
     return joined
 
 

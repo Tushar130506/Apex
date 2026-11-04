@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 
 from apex.strategy.pace_model import DRY, ParametricPace
+from apex.models.safety_hazard import sample_safety_car_starts
 
 
 @dataclass(frozen=True)
@@ -31,6 +32,7 @@ class Assumptions:
     sc_pit_loss_factor: float = 0.45
     deg_mult_scale: float = 1.0       # sensitivity knob
     require_two_compounds: bool = True
+    sc_hazard_by_lap: tuple[tuple[int, float], ...] = ()
 
 
 @dataclass(frozen=True)
@@ -70,12 +72,15 @@ def draw(n: int, st: RaceState, a: Assumptions, seed: int = 0) -> dict:
     """Shared random draws so strategy comparisons are paired (common random numbers)."""
     r = np.random.default_rng(seed)
     remaining = st.total_laps - st.lap + 1
-    has_sc = r.random(n) < a.sc_prob_per_race_remaining
+    hazard = dict(a.sc_hazard_by_lap)
+    if not hazard:
+        hazard = {lap: a.sc_prob_per_race_remaining for lap in range(1, remaining + 1)}
+    sc_start = sample_safety_car_starts(r, remaining, hazard, n)
     return dict(
         deg_mult=np.exp(r.normal(0, a.deg_mult_sigma, (n, 4))) * a.deg_mult_scale,
         pit_loss=r.normal(a.pit_loss_mean, a.pit_loss_sd, (n, 3)),
         noise=r.normal(0, a.lap_noise_sd, (n, remaining)),
-        sc_start=np.where(has_sc, st.lap + r.integers(0, remaining, n), -10**6))
+        sc_start=np.where(sc_start >= 0, st.lap + sc_start - 1, -10**6))
 
 
 def simulate(s: Strategy, st: RaceState, pace: ParametricPace, a: Assumptions, d: dict) -> np.ndarray:

@@ -16,8 +16,15 @@ import pandas as pd
 
 sys.path.insert(0, "src")
 from apex.data_io import load_processed
-from apex.features.winner_features import MODEL_COLUMNS, attach_race_results, build_pre_race_features, validate_race_targets
-from apex.models.winner import _race_metrics
+from apex.features.winner_features import (
+    MODEL_COLUMNS,
+    attach_grid_features,
+    attach_historical_features,
+    attach_race_results,
+    build_pre_race_features,
+    validate_race_targets,
+)
+from apex.models.winner import _race_metrics, race_probabilities
 from sklearn.ensemble import HistGradientBoostingClassifier
 from sklearn.impute import SimpleImputer
 from sklearn.pipeline import make_pipeline
@@ -64,12 +71,31 @@ def main() -> None:
     model_2025 = fit(data, list(range(2018, 2025)))
     post_2025 = data[(data["season"] == 2025) & (data["race_id"].str.split("_").str[-1].astype(int) > 12)].copy()
     post_2025["score"] = model_2025.predict_proba(post_2025[MODEL_COLUMNS])[:, 1]
+    post_2025["race_probability"] = race_probabilities(post_2025, post_2025["score"].to_numpy())
 
     # 2026 is a future/out-of-domain forecast using all completed historical seasons.
     model_2026 = fit(data, list(range(2018, 2026)))
-    future = features[features["season"].eq(2026)].copy()
+    future = attach_grid_features(
+        features[features["season"].eq(2026)].copy(),
+        results[results["season"].eq(2026)],
+    )
+    future = future.merge(
+        results[results["season"].eq(2026)][["race_id", "driver", "team"]]
+        .drop_duplicates(["race_id", "driver"]),
+        on=["race_id", "driver"],
+        how="left",
+        suffixes=("", "_result"),
+    )
+    if "team_result" in future:
+        future["team"] = future["team"].fillna(future.pop("team_result"))
+    historical_results = results[results["season"].lt(2026)]
+    future = attach_historical_features(future, historical_results)
     future["score"] = model_2026.predict_proba(future[MODEL_COLUMNS])[:, 1]
-    top3 = future.sort_values(["race_id", "score"], ascending=[True, False]).groupby("race_id").head(3)
+    future["race_probability"] = race_probabilities(future, future["score"].to_numpy())
+    top3 = future.sort_values(
+        ["race_id", "race_probability"], ascending=[True, False]
+    ).groupby("race_id").head(3)
+    model_all_labeled = fit(data, sorted(data["season"].unique().tolist()))
 
     output = Path(args.out)
     output.mkdir(parents=True, exist_ok=True)
@@ -77,6 +103,7 @@ def main() -> None:
     post_2025.to_parquet(output / "post_mid_2025_predictions.parquet", index=False)
     top3.to_parquet(output / "2026_top3_predictions.parquet", index=False)
     joblib.dump(model_2026, output / "model_2018_2025.joblib")
+    joblib.dump(model_all_labeled, output / "model_all_labeled_seasons.joblib")
 
     print(json.dumps({"folds": folds, "post_mid_2025_races": int(post_2025.race_id.nunique()),
                       "2026_races": int(top3.race_id.nunique())}, indent=2))

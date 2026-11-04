@@ -14,10 +14,17 @@ class ParametricPace:
     deg: dict = field(default_factory=lambda: {"SOFT": 0.09, "MEDIUM": 0.055, "HARD": 0.032})
     fuel_s_per_kg: float = 0.032
     burn_kg_per_lap: float = 1.6
+    deg_quad: dict = field(default_factory=lambda: {"SOFT": 0.0015, "MEDIUM": 0.001, "HARD": 0.0006})
     fit_provenance: str = "default_assumptions"
 
     def rel(self, compound: str, age, fuel_kg, deg_mult=1.0):
-        return self.offset[compound] + self.deg[compound] * np.asarray(age) * deg_mult + self.fuel_s_per_kg * fuel_kg
+        age_array = np.asarray(age)
+        return (
+            self.offset[compound]
+            + self.deg[compound] * age_array * deg_mult
+            + self.deg_quad.get(compound, 0.001) * age_array**2
+            + self.fuel_s_per_kg * fuel_kg
+        )
 
     @classmethod
     def fit(cls, laps: pd.DataFrame, burn_kg_per_lap: float = 1.6) -> "ParametricPace":

@@ -1,13 +1,19 @@
 import json
 import numpy as np, pandas as pd, pytest
 import fixtures as fx
-from apex.data_io import load_processed
+from apex.data_io import load_processed, load_processed_season
 from apex.evaluation.reports import predict_with_run, train_run
 from apex.evaluation.splits import LeakageError, assert_no_leakage, season_split
 from apex.features.lap_features import build_features
 from apex.features.race_features import build_race_features
-from apex.features.winner_features import add_session_identity, build_pre_race_features, validate_race_targets
-from apex.models.winner import train_winner_model
+from apex.features.winner_features import (
+    MODEL_COLUMNS,
+    add_session_identity,
+    build_pre_race_features,
+    validate_race_targets,
+)
+from apex.models.winner import race_probabilities, train_winner_model
+from apex.models.walk_forward import walk_forward_predictions
 from apex.models.degradation import stint_slopes
 from apex.schemas.contracts import ContractError, validate_laps
 from apex.strategy.pace_model import ParametricPace
@@ -97,7 +103,8 @@ def test_winner_features_and_holdout_model():
     features = build_pre_race_features(laps)
     results = pd.DataFrame([
         {"race_id": f"{season}_{rnd}", "driver": driver, "finish_position": 1 if driver == "AAA" else 2,
-         "grid_position": 1 if driver == "AAA" else 2, "classified": True}
+         "grid_position": 1 if driver == "AAA" else 2, "classified": True,
+         "team": "TEAM_A" if driver == "AAA" else "TEAM_B", "status": "Finished"}
         for season in (2022, 2023, 2024, 2025)
         for rnd in range(1, 3)
         for driver in ("AAA", "BBB", "CCC")
@@ -105,9 +112,65 @@ def test_winner_features_and_holdout_model():
     from apex.features.winner_features import attach_race_results
     joined = attach_race_results(features, results)
     validate_race_targets(joined)
+    assert {"grid_position", "grid_rank", "grid_gap_to_pole"} <= set(joined.columns)
+    assert {
+        "practice_median_lap_s",
+        "qualifying_median_lap_s",
+        "practice_pace_rank",
+        "qualifying_pace_rank",
+    } <= set(joined.columns)
+    assert joined.loc[joined.driver == "AAA", "grid_rank"].eq(1).all()
+    assert {
+        "driver_form_score",
+        "team_finish_rate",
+        "driver_track_start_count",
+        "practice_track_temp",
+        "prior_track_safety_car_lap_rate",
+        "prior_track_neutralized_lap_rate",
+    } <= set(joined.columns)
+    first_race = joined[joined["race_id"] == "2022_1"]
+    assert first_race["driver_form_score"].isna().all()
+    later_race = joined[joined["race_id"] == "2025_2"]
+    assert later_race["driver_form_score"].notna().all()
     metrics, _ = train_winner_model(joined, [2022], [2023], [2024, 2025])
-    assert set(metrics) == {"train", "val", "test"}
+    assert {"train", "val", "test", "fit_diagnostics"} <= set(metrics)
     assert metrics["test"]["races"] == 4
+    assert {
+        "winner_mean_reciprocal_rank",
+        "race_log_loss",
+        "race_brier_score",
+        "calibration_error",
+    } <= set(metrics["test"])
+
+
+def test_race_probabilities_are_normalized_per_race():
+    data = pd.DataFrame({"race_id": ["a", "a", "b"], "winner": [1, 0, 1]})
+    probabilities = race_probabilities(data, np.array([0.8, 0.2, 0.4]))
+    assert probabilities.sum() == pytest.approx(2.0)
+    assert probabilities[:2].sum() == pytest.approx(1.0)
+    assert probabilities[2] == pytest.approx(1.0)
+
+
+def test_walk_forward_adds_each_completed_race_in_order():
+    rows = []
+    for season in (2024, 2025):
+        for rnd in range(1, 5):
+            for driver, pace in (("AAA", 80.0), ("BBB", 81.0), ("CCC", 82.0)):
+                rows.append({
+                    "race_id": f"{season}_{rnd}",
+                    "season": season,
+                    "driver": driver,
+                    "winner": int(driver == "AAA"),
+                    "finish_position": 1 if driver == "AAA" else 2,
+                    **{column: pace for column in MODEL_COLUMNS},
+                })
+    data = pd.DataFrame(rows)
+    predictions, metrics = walk_forward_predictions(data, 2025, half_races=2)
+    assert [item["race_id"] for item in metrics] == ["2025_3", "2025_4"]
+    assert predictions.groupby("race_id")["training_races"].first().tolist() == [6, 7]
+    assert predictions.groupby("race_id")["race_probability"].sum().round(8).eq(1).all()
+    assert predictions.groupby("race_id")["calibrated_race_probability"].sum().round(8).eq(1).all()
+    assert {"grid_baseline_accuracy", "qualifying_baseline_accuracy", "calibrated_winner_accuracy"} <= set(metrics[0])
 
 
 def test_training_refuses_fixture_source_by_default(laps, tmp_path):
@@ -136,3 +199,4 @@ def test_load_processed_roundtrip(laps, tmp_path):
         g.to_parquet(tmp_path / f"laps_{y}.parquet")
     assert set(load_processed(tmp_path).season) == {2022, 2023, 2024, 2025}
     assert set(load_processed(tmp_path, [2024]).season) == {2024}
+    assert set(load_processed_season(tmp_path, 2024).season) == {2024}

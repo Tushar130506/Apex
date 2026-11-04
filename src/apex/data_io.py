@@ -14,3 +14,12 @@ def load_processed(directory: str | Path = "data/processed", years: list[int] | 
     if years is not None:
         df = df[df["season"].isin(years)]
     return validate_laps(df)
+
+
+def load_processed_season(directory: str | Path, year: int) -> pd.DataFrame:
+    """Load and validate one season without materializing other seasons."""
+    path = Path(directory) / f"laps_{year}.parquet"
+    if not path.exists():
+        raise FileNotFoundError(f"no processed laps for season {year}: {path}")
+    frame = pd.read_parquet(path).drop_duplicates(["session_id", "driver", "lap_no"])
+    return validate_laps(frame)
