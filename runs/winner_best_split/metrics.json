@@ -1,0 +1,32 @@
+{
+  "train": {
+    "races": 125,
+    "winner_accuracy": 0.896,
+    "actual_winner_mean_score": 0.6354288165630143,
+    "winner_mean_reciprocal_rank": 0.9466666666666668,
+    "race_log_loss": 0.33073559106605677,
+    "race_brier_score": 0.15841230066263995,
+    "calibration_error": 0.012821404189131191,
+    "top_three_overlap": 0.6906666666666667
+  },
+  "val": {
+    "races": 24,
+    "winner_accuracy": 0.4583333333333333,
+    "actual_winner_mean_score": 0.3801319000555503,
+    "winner_mean_reciprocal_rank": 0.6615079365079365,
+    "race_log_loss": 1.8136810800832446,
+    "race_brier_score": 0.7565544247857305,
+    "calibration_error": 0.029818321810568232,
+    "top_three_overlap": 0.625
+  },
+  "test": {
+    "races": 24,
+    "winner_accuracy": 0.5416666666666666,
+    "actual_winner_mean_score": 0.46249500657023157,
+    "winner_mean_reciprocal_rank": 0.7569444444444443,
+    "race_log_loss": 1.035195169060193,
+    "race_brier_score": 0.605094567330714,
+    "calibration_error": 0.015246318563181895,
+    "top_three_overlap": 0.75
+  }
+}

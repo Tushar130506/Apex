@@ -1,0 +1,71 @@
+{
+  "grid_previous": {
+    "feature_count": 17,
+    "validation_2024": {
+      "races": 24,
+      "winner_accuracy": 0.4166666666666667,
+      "actual_winner_mean_score": 0.3026821632303613,
+      "winner_mean_reciprocal_rank": 0.6385912698412698,
+      "race_log_loss": 1.8256809131076797,
+      "race_brier_score": 0.8009287758030554,
+      "calibration_error": 0.025589953143563854,
+      "top_three_overlap": 0.6527777777777778
+    },
+    "test_2025": {
+      "races": 24,
+      "winner_accuracy": 0.6666666666666666,
+      "actual_winner_mean_score": 0.4483090137858737,
+      "winner_mean_reciprocal_rank": 0.8020833333333334,
+      "race_log_loss": 1.0571517395627832,
+      "race_brier_score": 0.5163252026759753,
+      "calibration_error": 0.013635619711650985,
+      "top_three_overlap": 0.7222222222222222
+    }
+  },
+  "sessions_previous": {
+    "feature_count": 27,
+    "validation_2024": {
+      "races": 24,
+      "winner_accuracy": 0.4583333333333333,
+      "actual_winner_mean_score": 0.33135581643927536,
+      "winner_mean_reciprocal_rank": 0.662037037037037,
+      "race_log_loss": 1.7409228112758661,
+      "race_brier_score": 0.7515986435448335,
+      "calibration_error": 0.02031953210413193,
+      "top_three_overlap": 0.6527777777777778
+    },
+    "test_2025": {
+      "races": 24,
+      "winner_accuracy": 0.75,
+      "actual_winner_mean_score": 0.4511478220393914,
+      "winner_mean_reciprocal_rank": 0.8472222222222222,
+      "race_log_loss": 1.055708983996818,
+      "race_brier_score": 0.4944155725991959,
+      "calibration_error": 0.015000692939410823,
+      "top_three_overlap": 0.7222222222222222
+    }
+  },
+  "current_full": {
+    "feature_count": 39,
+    "validation_2024": {
+      "races": 24,
+      "winner_accuracy": 0.4583333333333333,
+      "actual_winner_mean_score": 0.3801319000555503,
+      "winner_mean_reciprocal_rank": 0.6615079365079365,
+      "race_log_loss": 1.8136810800832446,
+      "race_brier_score": 0.7565544247857305,
+      "calibration_error": 0.029818321810568232,
+      "top_three_overlap": 0.625
+    },
+    "test_2025": {
+      "races": 24,
+      "winner_accuracy": 0.5416666666666666,
+      "actual_winner_mean_score": 0.46249500657023157,
+      "winner_mean_reciprocal_rank": 0.7569444444444443,
+      "race_log_loss": 1.035195169060193,
+      "race_brier_score": 0.605094567330714,
+      "calibration_error": 0.015246318563181895,
+      "top_three_overlap": 0.75
+    }
+  }
+}

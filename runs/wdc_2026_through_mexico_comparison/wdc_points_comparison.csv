@@ -1,0 +1,25 @@
+predicted_rank,actual_rank,driver,team,points_through_mexico_prediction,actual_points,points_error,predicted_wins,predicted_top3
+1,1,ANT,Mercedes,327.0,349.0,-22.0,2,7
+2,4,RUS,Mercedes,266.0,216.0,50.0,1,5
+3,3,HAM,Ferrari,254.0,232.0,22.0,1,4
+4,5,LEC,Ferrari,215.0,211.0,4.0,1,4
+5,6,NOR,McLaren,206.0,188.0,18.0,3,3
+6,2,VER,Red Bull Racing,204.0,241.0,-37.0,2,5
+7,7,PIA,McLaren,126.0,123.0,3.0,0,0
+8,8,HAD,Red Bull Racing,114.0,107.0,7.0,0,2
+9,9,LAW,Racing Bulls,59.0,76.0,-17.0,0,0
+10,10,GAS,Alpine,43.0,40.0,3.0,0,0
+11,11,LIN,Racing Bulls,32.0,37.0,-5.0,0,0
+12,12,COL,Alpine,28.0,27.0,1.0,0,0
+13,13,BEA,Haas F1 Team,17.0,19.0,-2.0,0,0
+14,14,BOR,Audi,10.0,14.0,-4.0,0,0
+15,16,SAI,Williams,6.0,7.0,-1.0,0,0
+16,19,ALB,Williams,5.0,5.0,0.0,0,0
+17,16,OCO,Haas F1 Team,3.0,7.0,-4.0,0,0
+18,15,HUL,Audi,2.0,11.0,-9.0,0,0
+19,16,ALO,Aston Martin,1.0,7.0,-6.0,0,0
+20,20,HIR,None,1.0,1.0,0.0,0,0
+21,20,TSU,Racing Bulls,0.0,1.0,-1.0,0,0
+22,22,BOT,Cadillac,0.0,0.0,0.0,0,0
+23,22,PER,Cadillac,0.0,0.0,0.0,0,0
+24,22,STR,Aston Martin,0.0,0.0,0.0,0,0
