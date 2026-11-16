@@ -155,22 +155,29 @@ def test_walk_forward_adds_each_completed_race_in_order():
     rows = []
     for season in (2024, 2025):
         for rnd in range(1, 5):
-            for driver, pace in (("AAA", 80.0), ("BBB", 81.0), ("CCC", 82.0)):
+            for position, driver in enumerate(("AAA", "BBB", "CCC"), start=1):
                 rows.append({
                     "race_id": f"{season}_{rnd}",
                     "season": season,
+                    "track": f"Track {rnd}",
                     "driver": driver,
-                    "winner": int(driver == "AAA"),
-                    "finish_position": 1 if driver == "AAA" else 2,
-                    **{column: pace for column in MODEL_COLUMNS},
+                    "team": f"TEAM_{driver}",
+                    "grid_position": position,
+                    "qualifying_best_lap_s": 79.0 + position,
+                    "finish_position": position,
+                    "status": "Finished",
                 })
     data = pd.DataFrame(rows)
     predictions, metrics = walk_forward_predictions(data, 2025, half_races=2)
     assert [item["race_id"] for item in metrics] == ["2025_3", "2025_4"]
     assert predictions.groupby("race_id")["training_races"].first().tolist() == [6, 7]
     assert predictions.groupby("race_id")["race_probability"].sum().round(8).eq(1).all()
-    assert predictions.groupby("race_id")["calibrated_race_probability"].sum().round(8).eq(1).all()
-    assert {"grid_baseline_accuracy", "qualifying_baseline_accuracy", "calibrated_winner_accuracy"} <= set(metrics[0])
+    assert predictions["race_probability"].gt(0).all()
+    # A strict order: no shared positions, and the pole-sitter who always wins leads.
+    assert predictions.groupby("race_id")["predicted_position"].apply(sorted).tolist() == [[1, 2, 3]] * 2
+    assert predictions.loc[predictions["predicted_position"].eq(1), "driver"].eq("AAA").all()
+    assert {"grid_baseline_accuracy", "qualifying_baseline_accuracy", "race_log_loss"} <= set(metrics[0])
+    assert all(item["winner_accuracy"] == 1.0 for item in metrics)
 
 
 def test_training_refuses_fixture_source_by_default(laps, tmp_path):

@@ -1,0 +1,34 @@
+{
+  "checkpoints": 89,
+  "seasons": [
+    2023,
+    2024,
+    2025,
+    2026
+  ],
+  "champion_was_favourite": 0.8202247191011236,
+  "mean_champion_probability": 0.7901966292134831,
+  "champion_log_loss": 0.4038606151279403,
+  "by_phase": {
+    "1-6 left": {
+      "checkpoints": 24,
+      "champion_was_favourite": 0.9166666666666666,
+      "mean_champion_probability": 0.913125
+    },
+    "7-12 left": {
+      "checkpoints": 24,
+      "champion_was_favourite": 0.8333333333333334,
+      "mean_champion_probability": 0.8135416666666666
+    },
+    "13-18 left": {
+      "checkpoints": 24,
+      "champion_was_favourite": 0.7083333333333334,
+      "mean_champion_probability": 0.7153958333333333
+    },
+    "19+ left": {
+      "checkpoints": 17,
+      "champion_was_favourite": 0.8235294117647058,
+      "mean_champion_probability": 0.6892941176470588
+    }
+  }
+}
