@@ -19,8 +19,8 @@ def test_non_solver_data_refused_by_default(doe):
     validate_cfd(doe, allowed_provenance=("test_fixture",))
 
 
-@pytest.mark.parametrize("solver", ["ansys_fluent", "star_ccm"])
-def test_both_solvers_accepted(doe, solver):
+@pytest.mark.parametrize("solver", ["openfoam", "ansys_fluent", "star_ccm"])
+def test_real_solvers_accepted(doe, solver):
     validate_cfd(doe.assign(provenance=solver))
 
 
@@ -39,10 +39,10 @@ def test_unconverged_rows_rejected(doe):
 
 def test_run_sheet_columns():
     rs = run_sheet(latin_hypercube(5))
-    assert rs.provenance.eq("ansys_fluent_pending").all() and len(rs) == 5
+    assert rs.provenance.eq("openfoam_pending").all() and len(rs) == 5
     assert run_sheet(latin_hypercube(5), solver="star_ccm").provenance.eq("star_ccm_pending").all()
     with pytest.raises(ValueError):
-        run_sheet(latin_hypercube(5), solver="openfoam")
+        run_sheet(latin_hypercube(5), solver="made_up")
 
 
 def test_surrogate_holdout_and_extrapolation_flag(doe):

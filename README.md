@@ -166,7 +166,7 @@ grid position from a pre-race source rather than importing finishing results.
 - Fuel mass is an estimate (linear burn); FastF1 has no fuel data. Neutralised/pit/inaccurate laps are excluded with a stored reason.
 - Driver, team, circuit, weather and traffic are confounders: read `mae_by_track` / `mae_by_compound` in `metrics.json`.
 - Not yet run against the live FastF1 API in the build environment; run `season 2024 --max-events 3` first.
-- Aero (`src/apex/aero`) needs your own CFD results; `validate_cfd` accepts only rows marked `ansys_fluent` or `star_ccm`, one solver per table.
+- Aero (`src/apex/aero`) needs your own CFD results; `validate_cfd` accepts only rows marked `openfoam` (the default), `ansys_fluent` or `star_ccm`, one solver per table.
 - Optional strategy API: `APEX_RUN=runs/pace_v1 uvicorn apex.api.app:app` uses the run's fitted pace model.
 
 ## Current race-intelligence modules

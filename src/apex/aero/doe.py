@@ -16,11 +16,11 @@ def latin_hypercube(n: int, bounds: dict[str, tuple[float, float]] = DEFAULT_BOU
     return df.round(4)
 
 
-SOLVERS = ("ansys_fluent", "star_ccm")
+SOLVERS = ("openfoam", "ansys_fluent", "star_ccm")
 
 
 def run_sheet(df: pd.DataFrame, rho: float = 1.225, velocity_ms: float = 50.0,
-              solver: str = "ansys_fluent") -> pd.DataFrame:
+              solver: str = "openfoam") -> pd.DataFrame:
     """Case list to hand to the CFD solver (one row per run). Fill cd/cl/residual columns after solving,
     then change provenance from '<solver>_pending' to '<solver>'."""
     if solver not in SOLVERS:

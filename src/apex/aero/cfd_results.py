@@ -3,7 +3,7 @@ from __future__ import annotations
 import pandas as pd
 from apex.schemas.contracts import AERO_COLUMNS, ContractError
 
-REAL_PROVENANCE = ("ansys_fluent", "star_ccm")
+REAL_PROVENANCE = ("openfoam", "ansys_fluent", "star_ccm")
 
 
 def validate_cfd(df: pd.DataFrame, residual_tol: float = 1e-3, allowed_provenance=REAL_PROVENANCE) -> pd.DataFrame:
