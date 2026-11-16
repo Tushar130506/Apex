@@ -1,3 +1,5 @@
+> Superseded by `RACE_MODEL_REPORT.md`. This file describes the earlier winner classifier.
+
 # 2026 walk-forward winner validation through Mexico
 
 ## Protocol

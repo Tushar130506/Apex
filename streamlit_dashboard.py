@@ -13,7 +13,6 @@ import streamlit as st
 sys.path.insert(0, str(Path(__file__).parent / "src"))
 from apex.data_io import load_processed
 from apex.features.winner_features import (
-    MODEL_COLUMNS,
     attach_grid_features,
     attach_historical_features,
     attach_prior_safety_features,
@@ -21,8 +20,7 @@ from apex.features.winner_features import (
     build_pre_race_features,
     build_race_safety_summary,
 )
-from apex.models.race_monte_carlo import monte_carlo_race_probabilities
-from apex.models.walk_forward import make_walk_forward_model
+from apex.models.forecast import add_upcoming_race, predict_race
 
 
 ROOT = Path(__file__).parent
@@ -53,7 +51,7 @@ def load_laps(signature: tuple[tuple[str, int], ...]) -> pd.DataFrame:
 
 @st.cache_data(show_spinner="Loading race predictions...")
 def load_predictions() -> pd.DataFrame:
-    preferred = ROOT / "runs" / "walk_forward_championship_2023_2026" / "race_predictions.parquet"
+    preferred = ROOT / "runs" / "race_order_walk_forward" / "race_predictions.parquet"
     candidates = [preferred] if preferred.exists() else []
     candidates += sorted(
         (ROOT / "runs").glob("**/*predictions.parquet"),
@@ -109,7 +107,7 @@ def load_championship_forecast() -> tuple[pd.DataFrame, pd.DataFrame, str]:
 
 @st.cache_data(show_spinner="Loading model comparison...")
 def load_model_comparison() -> pd.DataFrame:
-    path = ROOT / "runs" / "walk_forward_championship_2023_2026" / "race_prediction_actual.csv"
+    path = ROOT / "runs" / "race_order_walk_forward" / "race_prediction_actual.csv"
     if not path.exists():
         return pd.DataFrame()
     frame = pd.read_csv(path)
@@ -205,18 +203,15 @@ def predict_on_demand(
         )
     target = attach_historical_features(target, prior_results)
     target = attach_grid_features(target, target_result) if not target_result.empty else target
-    model = make_walk_forward_model()
-    model.fit(training[MODEL_COLUMNS], training["winner"])
-    target["score"] = model.predict_proba(target[MODEL_COLUMNS])[:, 1]
-    target["race_probability"] = monte_carlo_race_probabilities(
-        target, target["score"].to_numpy(), simulations=1000, seed=0
-    )
-    target["predicted_position"] = (
-        target["race_probability"].rank(method="first", ascending=False).astype(int)
-    )
-    target["training_races"] = int(training["race_id"].nunique())
-    target["training_through_race"] = target_order - 1
-    return target.sort_values("race_probability", ascending=False)
+    # The target race enters with blank result columns: nothing about its
+    # outcome can reach the model. Calibration uses earlier races only.
+    for column in ("finish_position", "classified", "points", "derived_points", "status", "winner"):
+        target[column] = float("nan")
+    table = pd.concat([training, target], ignore_index=True)
+    forecast = predict_race(table, target_race_id)
+    forecast["score"] = forecast["strength"]
+    forecast["team"] = forecast["team_canonical"]
+    return forecast.sort_values("predicted_position")
 
 
 @st.cache_data(show_spinner="Building historical circuit forecast...")
@@ -227,74 +222,28 @@ def predict_future_circuit(
     circuit: str,
 ) -> pd.DataFrame:
     """Forecast a future circuit from prior circuit data and current form."""
-    features, labeled = build_model_inputs(lap_signature, result_signature)
+    _, labeled = build_model_inputs(lap_signature, result_signature)
     result_data = load_results(result_signature)
     season_results = result_data[result_data["season"].eq(season)].copy()
-    if season_results.empty:
+    if season_results.empty or labeled.empty:
         return pd.DataFrame()
     current_order = season_results["race_id"].map(_race_order).max()
-    target_order = current_order + 1
-    target_race_id = f"{season}_24" if season == 2026 and circuit == "Abu Dhabi Grand Prix" else f"{season}_{target_order % 100}"
+    target_race_id = f"{season}_{current_order % 100 + 1}"
+    training = labeled[labeled["race_id"].map(_race_order).le(current_order)]
+    if training["race_id"].nunique() < 2:
+        return pd.DataFrame()
     current_drivers = season_results[
         season_results["race_id"].map(_race_order).eq(current_order)
     ][["driver", "team"]].drop_duplicates("driver")
-    circuit_rows = features[features["track"].eq(circuit)].copy()
-    if circuit_rows.empty:
-        return pd.DataFrame()
-    circuit_rows["_order"] = circuit_rows["race_id"].map(_race_order)
-    circuit_rows = circuit_rows.sort_values("_order").drop_duplicates("driver", keep="last")
-    fallback = features[features["race_id"].eq(f"{season}_{current_order % 100}")].copy()
-    target = current_drivers.merge(
-        circuit_rows.drop(columns=["_order", "season", "race_id", "track"], errors="ignore"),
-        on="driver",
-        how="left",
-        suffixes=("", "_circuit"),
-    )
-    if not fallback.empty:
-        fallback = fallback.drop(columns=["season", "race_id", "track"], errors="ignore")
-        target = target.merge(
-            fallback,
-            on="driver",
-            how="left",
-            suffixes=("", "_fallback"),
-        )
-        for column in MODEL_COLUMNS:
-            fallback_column = f"{column}_fallback"
-            if column not in target and fallback_column in target:
-                target[column] = target[fallback_column]
-            elif fallback_column in target:
-                target[column] = target[column].fillna(target[fallback_column])
-    target["race_id"] = target_race_id
-    target["season"] = season
-    target["track"] = circuit
-    target["grid_position"] = float("nan")
-    target["grid_rank"] = float("nan")
-    target["grid_gap_to_pole"] = float("nan")
-    prior_results = result_data[
-        result_data["race_id"].map(_race_order).lt(current_order + 1)
-    ].copy()
-    target = attach_historical_features(target, prior_results)
-    training = (
-        labeled[
-            labeled["race_id"].map(_race_order).lt(current_order + 1)
-        ]
-        if "race_id" in labeled
-        else pd.DataFrame()
-    )
-    if training.empty:
-        return pd.DataFrame()
-    model = make_walk_forward_model()
-    model.fit(training[MODEL_COLUMNS], training["winner"])
-    target["score"] = model.predict_proba(target[MODEL_COLUMNS])[:, 1]
-    target["race_probability"] = monte_carlo_race_probabilities(
-        target, target["score"].to_numpy(), simulations=1000, seed=0
-    )
-    target["predicted_position"] = target["race_probability"].rank(
-        method="first", ascending=False
-    ).astype(int)
-    target["training_races"] = int(training["race_id"].nunique())
-    target["future_circuit_forecast"] = True
-    return target.sort_values("race_probability", ascending=False)
+    # No session of the future weekend exists yet, so only prior-race form and
+    # the driver's own history at this circuit are used. Earlier versions
+    # copied last year's practice and qualifying pace into the target row.
+    table = add_upcoming_race(training, target_race_id, circuit, current_drivers)
+    forecast = predict_race(table, target_race_id)
+    forecast["score"] = forecast["strength"]
+    forecast["team"] = forecast["team_canonical"]
+    forecast["future_circuit_forecast"] = True
+    return forecast.sort_values("predicted_position")
 
 
 def _session_type(value: object) -> str:

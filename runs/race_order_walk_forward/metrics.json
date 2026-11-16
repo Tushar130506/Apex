@@ -1,0 +1,233 @@
+{
+  "protocol": {
+    "first_scored_season": 2021,
+    "warmup_races_for_calibration": 39,
+    "refit": "before every race, on all earlier races",
+    "seed": 0
+  },
+  "overall": {
+    "races": 133,
+    "winner_accuracy": 0.6165413533834586,
+    "winner_mean_reciprocal_rank": 0.7613080319847237,
+    "winner_in_top_three": 0.9172932330827067,
+    "top_three_overlap": 0.6842105263157895,
+    "race_log_loss": 1.1346639188375538,
+    "race_brier_score": 0.5401317765037399,
+    "podium_brier_score": 0.06543194366864018,
+    "finish_order_spearman": 0.680098646270942,
+    "pole_sitter_accuracy": 0.5639097744360902,
+    "grid_only_log_loss": 1.483332247894451,
+    "grid_only_accuracy": 0.5639097744360902
+  },
+  "by_season": {
+    "2021": {
+      "races": 22,
+      "winner_accuracy": 0.5909090909090909,
+      "winner_mean_reciprocal_rank": 0.7312409812409814,
+      "winner_in_top_three": 0.9090909090909091,
+      "top_three_overlap": 0.6969696969696969,
+      "race_log_loss": 1.4742697039599157,
+      "race_brier_score": 0.6288489473815034,
+      "podium_brier_score": 0.06925083204730101,
+      "finish_order_spearman": 0.6820232399179768,
+      "pole_sitter_accuracy": 0.5,
+      "grid_only_log_loss": 1.6587497174445602,
+      "grid_only_accuracy": 0.5
+    },
+    "2022": {
+      "races": 22,
+      "winner_accuracy": 0.5,
+      "winner_mean_reciprocal_rank": 0.6946969696969696,
+      "winner_in_top_three": 0.8181818181818182,
+      "top_three_overlap": 0.6515151515151515,
+      "race_log_loss": 1.2391771806652514,
+      "race_brier_score": 0.6122009575393912,
+      "podium_brier_score": 0.06965420207448116,
+      "finish_order_spearman": 0.6046707678286626,
+      "pole_sitter_accuracy": 0.45454545454545453,
+      "grid_only_log_loss": 1.8051474388683197,
+      "grid_only_accuracy": 0.45454545454545453
+    },
+    "2023": {
+      "races": 22,
+      "winner_accuracy": 0.8636363636363636,
+      "winner_mean_reciprocal_rank": 0.9242424242424242,
+      "winner_in_top_three": 1.0,
+      "top_three_overlap": 0.712121212121212,
+      "race_log_loss": 0.3941728670466107,
+      "race_brier_score": 0.179576167733505,
+      "podium_brier_score": 0.06294223805119761,
+      "finish_order_spearman": 0.670790612895876,
+      "pole_sitter_accuracy": 0.6363636363636364,
+      "grid_only_log_loss": 1.3985539544509742,
+      "grid_only_accuracy": 0.6363636363636364
+    },
+    "2024": {
+      "races": 24,
+      "winner_accuracy": 0.5,
+      "winner_mean_reciprocal_rank": 0.6652777777777777,
+      "winner_in_top_three": 0.8333333333333334,
+      "top_three_overlap": 0.638888888888889,
+      "race_log_loss": 1.5976981611549885,
+      "race_brier_score": 0.7199862252705757,
+      "podium_brier_score": 0.0721157410820381,
+      "finish_order_spearman": 0.7534565580618212,
+      "pole_sitter_accuracy": 0.4583333333333333,
+      "grid_only_log_loss": 1.6441482807263268,
+      "grid_only_accuracy": 0.4583333333333333
+    },
+    "2025": {
+      "races": 24,
+      "winner_accuracy": 0.5833333333333334,
+      "winner_mean_reciprocal_rank": 0.7638888888888888,
+      "winner_in_top_three": 1.0,
+      "top_three_overlap": 0.7361111111111112,
+      "race_log_loss": 1.0108055825671067,
+      "race_brier_score": 0.554872457761946,
+      "podium_brier_score": 0.05802713262492288,
+      "finish_order_spearman": 0.6718671679197993,
+      "pole_sitter_accuracy": 0.6666666666666666,
+      "grid_only_log_loss": 1.1224712869639561,
+      "grid_only_accuracy": 0.6666666666666666
+    },
+    "2026": {
+      "races": 19,
+      "winner_accuracy": 0.6842105263157895,
+      "winner_mean_reciprocal_rank": 0.8026315789473685,
+      "winner_in_top_three": 0.9473684210526315,
+      "top_three_overlap": 0.6666666666666666,
+      "race_log_loss": 1.0493987799623823,
+      "race_brier_score": 0.5256391728326356,
+      "podium_brier_score": 0.06041455471030746,
+      "finish_order_spearman": 0.6937204671758449,
+      "pole_sitter_accuracy": 0.6842105263157895,
+      "grid_only_log_loss": 1.258441837294232,
+      "grid_only_accuracy": 0.6842105263157895
+    }
+  },
+  "model_vs_grid_only_log_loss": {
+    "mean_difference": -0.3486683290568972,
+    "ci95_low": -0.5238759924423941,
+    "ci95_high": -0.17629535387068193,
+    "probability_model_better": 1.0
+  },
+  "model_vs_pole_sitter_accuracy": {
+    "mean_difference": -0.05263157894736842,
+    "ci95_low": -0.12781954887218044,
+    "ci95_high": 0.022556390977443608,
+    "probability_model_better": 0.8925
+  },
+  "win_reliability": [
+    {
+      "band": "-0.00-0.02",
+      "rows": 2047,
+      "predicted": 0.0027369714504343213,
+      "observed": 0.0014655593551538837
+    },
+    {
+      "band": "0.02-0.05",
+      "rows": 222,
+      "predicted": 0.03262702658940389,
+      "observed": 0.02252252252252252
+    },
+    {
+      "band": "0.05-0.10",
+      "rows": 117,
+      "predicted": 0.07269807503820505,
+      "observed": 0.07692307692307693
+    },
+    {
+      "band": "0.10-0.20",
+      "rows": 98,
+      "predicted": 0.138546883568922,
+      "observed": 0.15306122448979592
+    },
+    {
+      "band": "0.20-0.35",
+      "rows": 87,
+      "predicted": 0.27101261985568104,
+      "observed": 0.22988505747126436
+    },
+    {
+      "band": "0.35-0.50",
+      "rows": 47,
+      "predicted": 0.4250491882520132,
+      "observed": 0.5531914893617021
+    },
+    {
+      "band": "0.50-0.70",
+      "rows": 45,
+      "predicted": 0.5983347691617912,
+      "observed": 0.5555555555555556
+    },
+    {
+      "band": "0.70-1.00",
+      "rows": 33,
+      "predicted": 0.8360750236763472,
+      "observed": 0.9090909090909091
+    }
+  ],
+  "podium_reliability": [
+    {
+      "band": "-0.00-0.05",
+      "rows": 1681,
+      "predicted": 0.014430336015283665,
+      "observed": 0.00594883997620464
+    },
+    {
+      "band": "0.05-0.15",
+      "rows": 336,
+      "predicted": 0.09182877273224752,
+      "observed": 0.07142857142857142
+    },
+    {
+      "band": "0.15-0.30",
+      "rows": 217,
+      "predicted": 0.21648097888292836,
+      "observed": 0.29493087557603687
+    },
+    {
+      "band": "0.30-0.50",
+      "rows": 163,
+      "predicted": 0.39913870171588944,
+      "observed": 0.49079754601226994
+    },
+    {
+      "band": "0.50-0.70",
+      "rows": 105,
+      "predicted": 0.5980864084795608,
+      "observed": 0.6285714285714286
+    },
+    {
+      "band": "0.70-0.85",
+      "rows": 82,
+      "predicted": 0.7804927433172506,
+      "observed": 0.7439024390243902
+    },
+    {
+      "band": "0.85-1.00",
+      "rows": 112,
+      "predicted": 0.9380371002378362,
+      "observed": 0.8392857142857143
+    }
+  ],
+  "previous_model_same_races": {
+    "races": 89,
+    "previous": {
+      "winner_accuracy": 0.6067415730337079,
+      "race_log_loss": 1.1054581911247376,
+      "tied_or_zero_probability_rows": 254
+    },
+    "current": {
+      "winner_accuracy": 0.651685393258427,
+      "race_log_loss": 1.02488168251282,
+      "tied_or_zero_probability_rows": 0
+    },
+    "log_loss_difference": {
+      "mean_difference": -0.0805765086119178,
+      "ci95_low": -0.2288384979801299,
+      "ci95_high": 0.05620984578085295,
+      "probability_model_better": 0.8703
+    }
+  }
+}

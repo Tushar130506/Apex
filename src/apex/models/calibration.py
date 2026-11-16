@@ -4,27 +4,30 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 
-from apex.models.winner import race_probabilities
+from apex.models.plackett_luce import build_layout, fit_temperature, win_probabilities
+
+
+def _log_strengths(scores: np.ndarray) -> np.ndarray:
+    clipped = np.clip(np.asarray(scores, dtype=float), 1e-7, 1 - 1e-7)
+    return np.log(clipped / (1.0 - clipped))
 
 
 def select_temperature(
-    history: pd.DataFrame,
-    *,
-    score_column: str = "score",
-    grid: tuple[float, ...] = (0.5, 0.75, 1.0, 1.25, 1.5, 2.0),
+    history: pd.DataFrame, *, score_column: str = "score", prior_strength: float = 10.0
 ) -> float:
-    """Select temperature using only completed earlier races."""
+    """Fit a temperature on completed earlier races only.
+
+    The search is continuous and shrunk towards 1, so a handful of races
+    cannot push it to an extreme value (the earlier six-point grid search on a
+    short rolling window did exactly that).
+    """
     if history.empty:
         return 1.0
-    losses = {}
-    for temperature in grid:
-        probabilities = race_probabilities(
-            history, history[score_column].to_numpy(float), temperature=temperature
-        )
-        actual = history["winner"].to_numpy(bool)
-        winners = probabilities[actual]
-        losses[temperature] = float(-np.log(np.clip(winners, 1e-12, 1.0)).mean())
-    return min(losses, key=losses.get)
+    finish = history["winner"].map({1: 1.0, True: 1.0}).astype(float)
+    layout = build_layout(history["race_id"], finish)
+    return fit_temperature(
+        _log_strengths(history[score_column].to_numpy(float)), layout, prior_strength=prior_strength
+    )
 
 
 def calibrated_race_probabilities(
@@ -32,6 +35,4 @@ def calibrated_race_probabilities(
 ) -> np.ndarray:
     """Apply chronological temperature calibration to target scores."""
     temperature = select_temperature(history)
-    return race_probabilities(
-        target, np.asarray(scores, dtype=float), temperature=temperature
-    )
+    return win_probabilities(target["race_id"], _log_strengths(scores) / temperature)

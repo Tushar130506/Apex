@@ -38,6 +38,38 @@ python scripts/predict.py --run runs/pace_v1 --years 2025 --out data/predictions
   set `season_seen_in_training=False` - treat results as out-of-domain.
 - Targets are one-step-ahead: each lap is predicted from earlier clean laps in its stint. Baselines: previous lap and rolling mean.
 
+## Race model
+
+The current race model, its walk-forward results and its remaining limits are
+in `RACE_MODEL_REPORT.md`. In short: a Plackett-Luce finish-order model,
+61.7% winner accuracy over 133 walk-forward races (pole-sitter: 56.4%), and
+calibrated win probabilities with no ties or zeros.
+
+```bash
+# Walk-forward evaluation against baselines (2021 onward)
+python scripts/evaluate_race_model.py
+# Title-race checkpoints before every race
+python scripts/walk_forward_championship.py
+# Forecast a race that has not been run (add --entries grid.csv after qualifying)
+python scripts/predict_race.py --race-id 2026_21 --track "Las Vegas Grand Prix"
+# Remaining races and both championships
+python scripts/forecast_season.py --season 2026 \
+  --remaining "2026_21=Las Vegas Grand Prix" "2026_22=Qatar Grand Prix"
+```
+
+| Module | Responsibility |
+|---|---|
+| `apex.features.form_features` | Race-relative weekend features and prior-race form |
+| `apex.models.plackett_luce` | Exploded-logit loss, linear and boosted models, temperature fit |
+| `apex.models.race_order` | Blended model, walk-forward loop, metrics |
+| `apex.models.forecast` | Unrun-race forecasts and season outlook |
+| `apex.models.championship` | Title simulation with countback and sprint rounds |
+
+`scripts/train_winner.py` and `scripts/repeated_holdout_winner.py` still train
+the earlier winner classifier and are kept as a baseline. The sections below
+describe that earlier work; where they disagree with `RACE_MODEL_REPORT.md`,
+the report is current.
+
 ## v0.2 race-winner foundation
 
 `APEX_RACE_WINNER_CONTEXT.md` defines the holdout-safe plan for race-winner
@@ -129,6 +161,8 @@ runner under `runs/winner_repeated_sessions/`; future inference must provide
 grid position from a pre-race source rather than importing finishing results.
 
 ## Caveats
+- The race model does not reliably beat picking the pole-sitter on winner accuracy (2025: worse, 2026: equal). Its measured edge is in probability quality.
+- Processed data has no sprint results and no pre-race weather forecasts; championship points are race points only.
 - Fuel mass is an estimate (linear burn); FastF1 has no fuel data. Neutralised/pit/inaccurate laps are excluded with a stored reason.
 - Driver, team, circuit, weather and traffic are confounders: read `mae_by_track` / `mae_by_compound` in `metrics.json`.
 - Not yet run against the live FastF1 API in the build environment; run `season 2024 --max-events 3` first.

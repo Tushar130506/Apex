@@ -43,7 +43,8 @@ def main() -> None:
                     )
                     status = str(row.get("Status", ""))
                     disqualified = "disqual" in status.lower()
-                    classified = status == "Finished" or pd.notna(classified_position)
+                    running = status.startswith(("Finished", "Lapped", "+"))
+                    classified = running or pd.notna(classified_position)
                     points = points_for_position(
                         position,
                         classified=classified,
@@ -57,6 +58,7 @@ def main() -> None:
                         "finish_position": position,
                         "grid_position": grid,
                         "classified": classified,
+                        "running_at_finish": running,
                         "points": points,
                         "derived_points": points,
                         "event_type": "race",

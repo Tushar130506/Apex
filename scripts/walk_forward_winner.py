@@ -60,6 +60,9 @@ def main() -> None:
     (output / f"{args.season}_metrics.json").write_text(
         json.dumps(metrics, indent=2), encoding="utf-8"
     )
+    data.drop(columns=[c for c in data.columns if c.startswith("_")]).to_parquet(
+        output / "input_features.parquet", index=False
+    )
     print(json.dumps({"season": args.season, "races": len(metrics), "metrics": metrics}, indent=2))
 
 

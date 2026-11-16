@@ -1,16 +1,22 @@
-"""Chronological Monte Carlo forecasts for driver and constructor championships."""
+"""Chronological Monte Carlo forecasts for driver and constructor championships.
+
+Completed points are fixed. Every remaining race is sampled as a complete
+Plackett-Luce finishing order, points are accumulated, and the final table is
+ranked with the sporting-regulation countback (most wins, then most second
+places, and so on), so a simulated season never ends in a shared title.
+"""
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Iterable
 
 import numpy as np
 import pandas as pd
 
-from apex.models.points import GRAND_PRIX_POINTS
-from apex.models.points import derive_points
+from apex.models.plackett_luce import sample_orders
+from apex.models.points import GRAND_PRIX_POINTS, SPRINT_POINTS, derive_points
 
 RACE_POINTS = GRAND_PRIX_POINTS
+MISSING_TEAM_LABELS = {"", "None", "nan"}
 
 
 @dataclass(frozen=True)
@@ -22,6 +28,7 @@ class ChampionshipForecast:
     simulations: int
     completed_races: int
     projected_races: int
+    projected_sprints: int = 0
 
 
 def _race_order(race_id: pd.Series) -> pd.Series:
@@ -31,12 +38,16 @@ def _race_order(race_id: pd.Series) -> pd.Series:
     return parts["season"].astype(int) * 100 + parts["round"].astype(int)
 
 
+def _has_missing_team(team: pd.Series) -> bool:
+    return bool(team.isna().any() or team.astype(str).str.strip().isin(MISSING_TEAM_LABELS).any())
+
+
 def _validate_results(results: pd.DataFrame) -> None:
     required = {"race_id", "driver", "team", "points"}
     missing = required - set(results.columns)
     if missing:
         raise ValueError(f"results missing columns: {sorted(missing)}")
-    if results["team"].isna().any() or results["team"].astype(str).str.strip().isin({"", "None", "nan"}).any():
+    if _has_missing_team(results["team"]):
         raise ValueError("results contain missing team labels")
 
 
@@ -45,56 +56,73 @@ def _validate_predictions(predictions: pd.DataFrame) -> None:
     missing = required - set(predictions.columns)
     if missing:
         raise ValueError(f"predictions missing columns: {sorted(missing)}")
-    if not ({"score", "race_probability"} & set(predictions.columns)):
-        raise ValueError("predictions require score or race_probability")
-    if predictions["team"].isna().any() or predictions["team"].astype(str).str.strip().isin({"", "None", "nan"}).any():
+    if not ({"strength", "score", "race_probability"} & set(predictions.columns)):
+        raise ValueError("predictions require strength, race_probability, or score")
+    if _has_missing_team(predictions["team"]):
         raise ValueError("predictions contain missing team labels")
+    if predictions.duplicated(["race_id", "driver"]).any():
+        raise ValueError("predictions contain duplicate race/driver rows")
 
 
-def _strengths(group: pd.DataFrame, temperature: float) -> np.ndarray:
+def _log_strengths(group: pd.DataFrame, temperature: float) -> np.ndarray:
+    """Log-strengths for one race.
+
+    ``strength`` is already a log-strength. ``race_probability`` and ``score``
+    are proportional to strength, so their logarithm is used.
+    """
     if temperature <= 0:
         raise ValueError("temperature must be greater than zero")
-    if "score" in group:
-        raw = pd.to_numeric(group["score"], errors="coerce").to_numpy(float)
+    if "strength" in group:
+        raw = pd.to_numeric(group["strength"], errors="coerce").to_numpy(float)
         if np.isfinite(raw).all():
-            centered = raw - raw.max()
-            return np.exp(centered / temperature)
-    probability = pd.to_numeric(group["race_probability"], errors="coerce").to_numpy(float)
-    if not np.isfinite(probability).all() or (probability < 0).any():
-        raise ValueError("prediction strengths must be finite and non-negative")
-    return np.maximum(probability, 1e-12) ** (1.0 / temperature)
+            return (raw - raw.max()) / temperature
+    for column in ("race_probability", "score"):
+        if column not in group:
+            continue
+        raw = pd.to_numeric(group[column], errors="coerce").to_numpy(float)
+        if np.isfinite(raw).all() and (raw >= 0).all():
+            logs = np.log(np.maximum(raw, 1e-12))
+            return (logs - logs.max()) / temperature
+    raise ValueError("prediction strengths must be finite and non-negative")
 
 
-def _sample_order(
-    group: pd.DataFrame,
-    rng: np.random.Generator,
-    temperature: float,
-    simulations: int = 1,
+def countback_ranks(points: np.ndarray, position_counts: np.ndarray) -> np.ndarray:
+    """Rank entrants (0 = champion) by points, then wins, seconds, thirds, ...
+
+    ``points`` has shape ``(simulations, entrants)`` and ``position_counts``
+    ``(simulations, entrants, positions)``. Entrants that are still level after
+    the full countback keep their input order, which only happens when their
+    simulated seasons are identical in every counted position.
+    """
+    simulations, entrants = points.shape
+    ranks = np.empty((simulations, entrants), dtype=int)
+    positions = position_counts.shape[2]
+    for simulation in range(simulations):
+        keys = [
+            -position_counts[simulation, :, position]
+            for position in range(positions - 1, -1, -1)
+        ]
+        keys.append(-points[simulation])
+        order = np.lexsort(keys)
+        ranks[simulation, order] = np.arange(entrants)
+    return ranks
+
+
+def _completed_position_counts(
+    completed: pd.DataFrame, key: str, labels: list[str], positions: int
 ) -> np.ndarray:
-    """Sample a Plackett-Luce order without replacing drivers."""
-    if simulations < 1:
-        raise ValueError("simulations must be positive")
-    drivers = group["driver"].to_numpy()
-    strengths = _strengths(group, temperature)
-    log_strengths = np.log(np.maximum(strengths, 1e-12))
-    available = np.ones((simulations, len(drivers)), dtype=bool)
-    order_indices = np.empty((simulations, len(drivers)), dtype=int)
-    for position in range(len(drivers)):
-        gumbels = rng.gumbel(size=(simulations, len(drivers)))
-        scores = np.where(available, log_strengths + gumbels, -np.inf)
-        selected = scores.argmax(axis=1)
-        order_indices[:, position] = selected
-        available[np.arange(simulations), selected] = False
-    orders = drivers[order_indices]
-    return orders[0] if simulations == 1 else orders
-
-
-def _points_for_order(order: Iterable[str]) -> dict[str, float]:
-    return {
-        driver: float(RACE_POINTS[position])
-        for position, driver in enumerate(order)
-        if position < len(RACE_POINTS)
-    }
+    counts = np.zeros((len(labels), positions))
+    if "finish_position" not in completed:
+        return counts
+    races = completed
+    if "event_type" in races:
+        races = races[races["event_type"].astype(str).str.lower().isin({"race", "grand prix", "gp"})]
+    finish = pd.to_numeric(races["finish_position"], errors="coerce")
+    index = {label: number for number, label in enumerate(labels)}
+    for label, position in zip(races[key], finish):
+        if label in index and pd.notna(position) and 1 <= position <= positions:
+            counts[index[label], int(position) - 1] += 1
+    return counts
 
 
 def forecast_championship(
@@ -104,118 +132,156 @@ def forecast_championship(
     simulations: int = 5000,
     seed: int = 0,
     temperature: float = 1.0,
+    sprint_race_ids: list[str] | None = None,
+    form_drift_per_race: float = 0.0,
 ) -> ChampionshipForecast:
     """Forecast WDC/WCC from completed points and future race predictions.
 
     ``completed_results`` must contain only races known at the prediction
     timestamp. ``future_predictions`` must contain only races after that
     timestamp. The function never reads future result columns.
+
+    ``sprint_race_ids`` lists future rounds that also hold a sprint; a second,
+    independent order is sampled for each and scored on the sprint scale.
+    ``form_drift_per_race`` is the standard deviation of a per-driver random
+    walk added to log-strengths race after race. It widens long-horizon
+    forecasts, because form measured today is a worse guide to a race ten
+    rounds away than to the next one.
     """
     if simulations < 1:
         raise ValueError("simulations must be positive")
+    if form_drift_per_race < 0:
+        raise ValueError("form_drift_per_race must be non-negative")
     _validate_results(completed_results)
     _validate_predictions(future_predictions)
     if {"finish_position", "classified"} <= set(completed_results.columns):
         completed = derive_points(completed_results)
-    elif "points" in completed_results:
-        completed = completed_results.copy()
-        completed["derived_points"] = pd.to_numeric(
-            completed["points"], errors="coerce"
-        ).fillna(0.0)
     else:
-        raise ValueError(
-            "completed results require finish_position/classified or derived points"
-        )
+        completed = completed_results.copy()
+        completed["derived_points"] = pd.to_numeric(completed["points"], errors="coerce").fillna(0.0)
     future = future_predictions.copy()
     completed["_order"] = _race_order(completed["race_id"])
     future["_order"] = _race_order(future["race_id"])
     if set(completed["race_id"]) & set(future["race_id"]):
         raise ValueError("completed and future races overlap")
-    if not future.empty and completed["_order"].max() >= future["_order"].min():
+    if not future.empty and not completed.empty and completed["_order"].max() >= future["_order"].min():
         raise ValueError("future predictions must be chronologically after completed races")
+    sprint_ids = set(sprint_race_ids or [])
+    unknown_sprints = sprint_ids - set(future["race_id"])
+    if unknown_sprints:
+        raise ValueError(f"sprint rounds without predictions: {sorted(unknown_sprints)}")
 
     drivers = sorted(set(completed["driver"]) | set(future["driver"]))
-    team_by_driver = (
-        pd.concat(
-            [completed[["driver", "team"]], future[["driver", "team"]]],
-            ignore_index=True,
-        )
-        .dropna(subset=["driver", "team"])
-        .drop_duplicates("driver")
+    driver_index = {driver: number for number, driver in enumerate(drivers)}
+    # A driver's current team is the one from the latest known race.
+    latest_team = (
+        pd.concat([completed[["driver", "team", "_order"]], future[["driver", "team", "_order"]]])
+        .sort_values("_order")
+        .drop_duplicates("driver", keep="last")
         .set_index("driver")["team"]
         .to_dict()
     )
-    base_driver = completed.groupby("driver")["derived_points"].sum().to_dict()
-    base_team = completed.groupby("team")["derived_points"].sum().to_dict()
-    driver_points = np.zeros((simulations, len(drivers)), dtype=float)
-    constructor_points: dict[str, np.ndarray] = {
-        team: np.zeros(simulations, dtype=float)
-        for team in set(team_by_driver.values())
-    }
+    teams = sorted(set(completed["team"]) | set(future["team"]))
+    team_index = {team: number for number, team in enumerate(teams)}
+    positions = max(
+        int(future.groupby("race_id").size().max()) if not future.empty else 0,
+        int(pd.to_numeric(completed.get("finish_position", pd.Series(dtype=float)), errors="coerce").max())
+        if "finish_position" in completed and completed["finish_position"].notna().any()
+        else 0,
+        1,
+    )
+
+    base_driver = completed.groupby("driver")["derived_points"].sum()
+    base_team = completed.groupby("team")["derived_points"].sum()
+    driver_points = np.tile(
+        np.array([float(base_driver.get(driver, 0.0)) for driver in drivers]), (simulations, 1)
+    )
+    team_points = np.tile(
+        np.array([float(base_team.get(team, 0.0)) for team in teams]), (simulations, 1)
+    )
+    driver_counts = np.tile(
+        _completed_position_counts(completed, "driver", drivers, positions), (simulations, 1, 1)
+    )
+    team_counts = np.tile(
+        _completed_position_counts(completed, "team", teams, positions), (simulations, 1, 1)
+    )
+
     rng = np.random.default_rng(seed)
-    future_groups = [group for _, group in future.groupby("race_id", sort=True)]
-    sampled_orders = [
-        _sample_order(group, rng, temperature, simulations=simulations)
-        for group in future_groups
-    ]
+    rows = np.arange(simulations)[:, None]
+    drift = np.zeros((simulations, len(drivers)))
+    race_scale = np.zeros(max(positions, len(RACE_POINTS)))
+    race_scale[: len(RACE_POINTS)] = RACE_POINTS
+    sprint_scale = np.zeros(max(positions, len(SPRINT_POINTS)))
+    sprint_scale[: len(SPRINT_POINTS)] = SPRINT_POINTS
+    projected_sprints = 0
+    for _, group in future.groupby("_order", sort=True):
+        group = group.sort_values("driver")
+        entrants = np.array([driver_index[driver] for driver in group["driver"]])
+        entrant_teams = np.array([team_index[team] for team in group["team"]])
+        strengths = _log_strengths(group, temperature)
+        if form_drift_per_race > 0:
+            drift += rng.normal(0.0, form_drift_per_race, size=drift.shape)
+        current = strengths[None, :] + drift[:, entrants]
+        events = [("race", race_scale)]
+        if group["race_id"].iloc[0] in sprint_ids:
+            events.insert(0, ("sprint", sprint_scale))
+            projected_sprints += 1
+        for kind, scale in events:
+            noise = rng.gumbel(size=current.shape)
+            orders = np.argsort(-(current + noise), axis=1, kind="stable")
+            width = orders.shape[1]
+            earned = np.broadcast_to(scale[:width], orders.shape)
+            np.add.at(driver_points, (rows, entrants[orders]), earned)
+            np.add.at(team_points, (rows, entrant_teams[orders]), earned)
+            if kind == "race":
+                slots = np.broadcast_to(np.arange(width), orders.shape)
+                np.add.at(driver_counts, (rows, entrants[orders], slots), 1.0)
+                np.add.at(team_counts, (rows, entrant_teams[orders], slots), 1.0)
 
-    for simulation in range(simulations):
-        points = {driver: float(base_driver.get(driver, 0.0)) for driver in drivers}
-        teams = {team: float(base_team.get(team, 0.0)) for team in constructor_points}
-        for group, sampled_group_orders in zip(future_groups, sampled_orders):
-            order = sampled_group_orders[simulation]
-            future_team_by_driver = (
-                group.dropna(subset=["driver", "team"])
-                .drop_duplicates("driver")
-                .set_index("driver")["team"]
-                .to_dict()
-            )
-            for driver, earned in _points_for_order(order).items():
-                points[driver] = points.get(driver, 0.0) + earned
-                team = future_team_by_driver.get(driver, team_by_driver.get(driver))
-                if team is not None:
-                    teams[team] = teams.get(team, 0.0) + earned
-        driver_points[simulation] = [points[driver] for driver in drivers]
-        for team, values in constructor_points.items():
-            values[simulation] = teams.get(team, 0.0)
-
+    driver_ranks = countback_ranks(driver_points, driver_counts)
+    team_ranks = countback_ranks(team_points, team_counts)
     driver_frame = pd.DataFrame(
         {
             "driver": drivers,
-            "current_points": [base_driver.get(driver, 0.0) for driver in drivers],
+            "team": [latest_team.get(driver) for driver in drivers],
+            "current_points": [float(base_driver.get(driver, 0.0)) for driver in drivers],
             "expected_final_points": driver_points.mean(axis=0),
-            "win_probability": (
-                (driver_points == driver_points.max(axis=1, keepdims=True))
-                / (driver_points == driver_points.max(axis=1, keepdims=True)).sum(
-                    axis=1, keepdims=True
-                )
-            ).mean(axis=0),
-            "top_three_probability": (
-                driver_points.argsort(axis=1)[:, -3:, None]
-                == np.arange(len(drivers))[None, None, :]
-            ).any(axis=1).mean(axis=0),
+            "points_p05": np.quantile(driver_points, 0.05, axis=0),
+            "points_p95": np.quantile(driver_points, 0.95, axis=0),
+            "win_probability": (driver_ranks == 0).mean(axis=0),
+            "top_three_probability": (driver_ranks < 3).mean(axis=0),
+            "expected_final_position": driver_ranks.mean(axis=0) + 1.0,
         }
-    ).sort_values(["win_probability", "expected_final_points"], ascending=False)
-
-    teams = sorted(constructor_points)
-    team_matrix = np.column_stack([constructor_points[team] for team in teams])
+    ).sort_values(
+        ["win_probability", "expected_final_points", "driver"], ascending=[False, False, True]
+    )
     constructor_frame = pd.DataFrame(
         {
             "team": teams,
-            "current_points": [base_team.get(team, 0.0) for team in teams],
-            "expected_final_points": team_matrix.mean(axis=0),
-            "win_probability": (
-                (team_matrix == team_matrix.max(axis=1, keepdims=True))
-                / (team_matrix == team_matrix.max(axis=1, keepdims=True)).sum(
-                    axis=1, keepdims=True
-                )
-            ).mean(axis=0),
+            "current_points": [float(base_team.get(team, 0.0)) for team in teams],
+            "expected_final_points": team_points.mean(axis=0),
+            "points_p05": np.quantile(team_points, 0.05, axis=0),
+            "points_p95": np.quantile(team_points, 0.95, axis=0),
+            "win_probability": (team_ranks == 0).mean(axis=0),
+            "expected_final_position": team_ranks.mean(axis=0) + 1.0,
         }
-    ).sort_values(["win_probability", "expected_final_points"], ascending=False)
+    ).sort_values(
+        ["win_probability", "expected_final_points", "team"], ascending=[False, False, True]
+    )
     return ChampionshipForecast(
         driver=driver_frame.reset_index(drop=True),
         constructor=constructor_frame.reset_index(drop=True),
         simulations=simulations,
         completed_races=int(completed["race_id"].nunique()),
         projected_races=int(future["race_id"].nunique()),
+        projected_sprints=projected_sprints,
     )
+
+
+__all__ = [
+    "ChampionshipForecast",
+    "RACE_POINTS",
+    "countback_ranks",
+    "forecast_championship",
+    "sample_orders",
+]

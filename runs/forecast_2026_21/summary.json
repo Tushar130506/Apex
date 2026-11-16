@@ -1,0 +1,10 @@
+{
+  "race_id": "2026_21",
+  "track": "Las Vegas Grand Prix",
+  "forecast_mode": "pre-weekend",
+  "trained_on_races": 192,
+  "trained_through_race": 202619,
+  "win_temperature": 0.852652366440796,
+  "predicted_winner": "VER",
+  "predicted_winner_probability": 0.3595743352767644
+}

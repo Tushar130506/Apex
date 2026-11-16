@@ -1,67 +1,71 @@
 """Race-by-race walk-forward winner evaluation."""
 from __future__ import annotations
 
-import pandas as pd
 import numpy as np
+import pandas as pd
 
-from apex.features.winner_features import MODEL_COLUMNS, validate_race_targets
-from apex.models.calibration import calibrated_race_probabilities
-from apex.models.overfit import diagnose_fit
-from apex.models.race_monte_carlo import monte_carlo_race_probabilities
-from apex.models.winner import _race_metrics
+from apex.features.form_features import ORDER_MODEL_COLUMNS, build_order_features, race_order
+from apex.models.plackett_luce import LinearPlackettLuce, build_layout, win_probabilities
+from apex.models.race_order import evaluate_predictions, walk_forward_order
+
+MIN_TRAINING_RACES = 20
+
+
+def baseline_pick(data: pd.DataFrame, column: str, ascending: bool) -> pd.Series:
+    """One deterministic pick per race from a single column.
+
+    Races where the column is missing for everyone get no pick. Level values
+    are separated by grid position and then driver code, never by row order.
+    """
+    if column not in data:
+        return pd.Series(dtype=object)
+    frame = data[["race_id", "driver"]].copy()
+    frame["_value"] = pd.to_numeric(data[column], errors="coerce")
+    if column == "grid_position":
+        frame["_value"] = frame["_value"].where(frame["_value"].gt(0))
+    grid = data["grid_position"] if "grid_position" in data else pd.Series(np.nan, index=data.index)
+    frame["_grid"] = pd.to_numeric(grid, errors="coerce").fillna(np.inf)
+    frame = frame.dropna(subset=["_value"]).sort_values(
+        ["race_id", "_value", "_grid", "driver"], ascending=[True, ascending, True, True]
+    )
+    return frame.groupby("race_id")["driver"].first()
 
 
 def _baseline_accuracy(data: pd.DataFrame, column: str, ascending: bool) -> float | None:
-    if column not in data:
+    picks = baseline_pick(data, column, ascending)
+    if picks.empty:
         return None
-    available = data[column].notna()
-    if column == "grid_position":
-        available &= pd.to_numeric(data[column], errors="coerce").gt(0)
-    if available.groupby(data["race_id"]).sum().eq(0).all():
-        return None
-    predicted = (
-        data.assign(
-            _available=available,
-            _sort_value=pd.to_numeric(data[column], errors="coerce"),
+    finish = pd.to_numeric(data["finish_position"], errors="coerce")
+    winners = data.loc[finish.eq(1)].set_index("race_id")["driver"]
+    joined = pd.concat([picks.rename("pick"), winners.rename("winner")], axis=1).dropna()
+    return float((joined["pick"] == joined["winner"]).mean()) if len(joined) else None
+
+
+def grid_only_probabilities(data: pd.DataFrame, target_orders: list[int]) -> pd.Series:
+    """Walk-forward win probabilities from grid position alone.
+
+    This is the honest probability baseline: a one-feature Plackett-Luce model
+    on log grid position, refitted before every race exactly like the main model.
+    """
+    frame = data.assign(_order=race_order(data["race_id"]))
+    output = pd.Series(np.nan, index=data.index)
+    for target_order in target_orders:
+        training = frame[frame["_order"].lt(target_order)]
+        target = frame[frame["_order"].eq(target_order)]
+        layout = build_layout(training["race_id"], training["finish_position"])
+        model = LinearPlackettLuce(l2=0.01, stage_weights=(1.0,)).fit(training[["grid_log"]], layout)
+        output.loc[target.index] = win_probabilities(
+            target["race_id"], model.strengths(target[["grid_log"]])
         )
-        .assign(_sort_value=lambda frame: frame["_sort_value"].where(
-            frame["_available"], np.inf if ascending else -np.inf
-        ))
-        .sort_values(["race_id", "_available", "_sort_value"], ascending=[True, False, ascending])
-        .groupby("race_id")
-        .head(1)
-    )
-    return float(predicted["winner"].mean())
+    return output
 
 
-def _calibrated_race_probabilities(
-    training: pd.DataFrame,
-    target: pd.DataFrame,
-    probabilities: np.ndarray,
-    prior_scores: list[np.ndarray],
-    prior_targets: list[np.ndarray],
-) -> np.ndarray:
-    """Calibrate only against outcomes from earlier walk-forward races."""
-    if not prior_scores:
-        return probabilities
-    history = pd.DataFrame(
-        {
-            "race_id": [
-                f"history_{index}" for index, scores_for_race in enumerate(prior_scores)
-                for _ in scores_for_race
-            ],
-            "score": np.concatenate(prior_scores),
-            "winner": np.concatenate(prior_targets),
-        }
-    )
-    return calibrated_race_probabilities(history, target, probabilities)
-
-
-def _race_order(frame: pd.DataFrame) -> pd.Series:
-    parts = frame["race_id"].astype(str).str.extract(r"^(?P<season>\d{4})_(?P<round>\d+)$")
-    if parts.isna().any().any():
-        raise ValueError("race_id values must have the form YYYY_round")
-    return parts["season"].astype(int) * 100 + parts["round"].astype(int)
+def prepare(data: pd.DataFrame, model_columns: list[str] | None = None) -> pd.DataFrame:
+    """Add finish-order features unless the caller supplies its own columns."""
+    columns = model_columns or ORDER_MODEL_COLUMNS
+    if set(columns) <= set(data.columns):
+        return data
+    return build_order_features(data)
 
 
 def walk_forward_predictions(
@@ -70,103 +74,58 @@ def walk_forward_predictions(
     half_races: int | None = None,
     seed: int = 0,
     model_columns: list[str] | None = None,
+    calibration_races: int = 40,
 ) -> tuple[pd.DataFrame, list[dict]]:
-    """Predict post-half-season races and append each completed race in order."""
-    validate_race_targets(data)
-    columns = model_columns or MODEL_COLUMNS
-    missing = set(columns) - set(data.columns)
+    """Predict post-half-season races and append each completed race in order.
+
+    ``calibration_races`` earlier races are predicted the same way first (when
+    enough history exists) so the temperature is already fitted on
+    out-of-sample forecasts when the first scored race is reached.
+    """
+    frame = prepare(data, model_columns).copy()
+    columns = list(model_columns or ORDER_MODEL_COLUMNS)
+    missing = set(columns) - set(frame.columns)
     if missing:
         raise ValueError(f"walk-forward data missing model columns: {sorted(missing)}")
-    frame = data.copy()
-    frame["_race_order"] = _race_order(frame)
-    season_rows = frame[frame["season"].eq(season)]
-    race_orders = sorted(season_rows["_race_order"].unique())
-    if len(race_orders) < 2:
+    frame["_order"] = race_order(frame["race_id"])
+    all_orders = sorted(frame["_order"].unique())
+    season_orders = [value for value in all_orders if value // 100 == season]
+    if len(season_orders) < 2:
         raise ValueError("selected season must contain at least two races")
-    half = half_races if half_races is not None else len(race_orders) // 2
-    if half < 1 or half >= len(race_orders):
+    half = half_races if half_races is not None else len(season_orders) // 2
+    if half < 1 or half >= len(season_orders):
         raise ValueError("half_races must be between 1 and the number of races minus 1")
-    predictions: list[pd.DataFrame] = []
+    targets = season_orders[half:]
+    earlier = [value for value in all_orders if value < targets[0]]
+    warmup = [
+        value for position, value in enumerate(earlier) if position >= MIN_TRAINING_RACES
+    ][-calibration_races:] if calibration_races > 0 else []
+    scored = walk_forward_order(
+        frame.drop(columns="_order"), warmup + targets, columns=columns, seed=seed
+    )
+    scored["_order"] = race_order(scored["race_id"])
+    predictions = scored[scored["_order"].isin(targets)].copy()
+    predictions["score"] = predictions["strength"]
+    predictions["uncalibrated_race_probability"] = win_probabilities(
+        predictions["race_id"], predictions["raw_strength"].to_numpy()
+    )
     metrics: list[dict] = []
-    prior_scores: list[np.ndarray] = []
-    prior_targets: list[np.ndarray] = []
-    for target_order in race_orders[half:]:
-        target = frame[frame["_race_order"].eq(target_order)].copy()
-        training = frame[frame["_race_order"].lt(target_order)]
-        if training.empty:
-            raise ValueError(f"no prior races available for {target['race_id'].iloc[0]}")
-        model = make_walk_forward_model(seed)
-        model.fit(training[columns], training["winner"])
-        target["score"] = model.predict_proba(target[columns])[:, 1]
-        target["race_probability"] = monte_carlo_race_probabilities(
-            target, target["score"].to_numpy(), simulations=1000, seed=seed
-        )
-        target["calibrated_race_probability"] = _calibrated_race_probabilities(
-            training,
-            target,
-            target["score"].to_numpy(),
-            prior_scores,
-            prior_targets,
-        )
-        target["predicted_position"] = target["race_probability"].rank(
-            method="first", ascending=False
-        ).astype(int)
-        target["training_races"] = int(training["race_id"].nunique())
-        target["training_through_race"] = int(target_order - 1)
-        predictions.append(target)
-        race_metrics = _race_metrics(
-            target,
-            target["score"].to_numpy(),
-            probabilities=target["race_probability"].to_numpy(),
-        )
+    for target_order in targets:
+        target = predictions[predictions["_order"].eq(target_order)]
+        race_metrics = evaluate_predictions(target)
         race_metrics.update(
             {
                 "race_id": str(target["race_id"].iloc[0]),
-                "training_races": int(training["race_id"].nunique()),
-                "grid_baseline_accuracy": _baseline_accuracy(
-                    target, "grid_position", ascending=True
-                ),
+                "training_races": int(target["training_races"].iloc[0]),
+                "temperature": float(target["temperature"].iloc[0]),
+                "grid_baseline_accuracy": _baseline_accuracy(target, "grid_position", True),
                 "qualifying_baseline_accuracy": _baseline_accuracy(
-                    target, "qualifying_pace_rank", ascending=True
+                    target, "qualifying_best_lap_s", True
                 ),
                 "form_baseline_accuracy": _baseline_accuracy(
-                    target, "driver_form_score", ascending=False
-                ),
-                "calibrated_winner_accuracy": float(
-                    target.loc[
-                        target.groupby("race_id")["calibrated_race_probability"].idxmax(),
-                        "winner",
-                    ].eq(1).mean()
-                ),
-                "calibrated_race_log_loss": float(
-                    -np.log(
-                        target.loc[target["winner"].eq(1), "calibrated_race_probability"]
-                        .clip(lower=1e-12)
-                    ).mean()
+                    target, "driver_points_fast", False
                 ),
             }
         )
         metrics.append(race_metrics)
-        prior_scores.append(target["race_probability"].to_numpy())
-        prior_targets.append(target["winner"].to_numpy())
-    return (
-        pd.concat(predictions, ignore_index=True).drop(columns="_race_order"),
-        metrics,
-    )
-
-
-def make_walk_forward_model(seed: int = 0) -> object:
-    """Build the same classifier pipeline used by the winner model."""
-    from sklearn.ensemble import HistGradientBoostingClassifier
-    from sklearn.impute import SimpleImputer
-    from sklearn.pipeline import make_pipeline
-
-    return make_pipeline(
-        SimpleImputer(strategy="median", add_indicator=True),
-        HistGradientBoostingClassifier(
-            max_iter=150,
-            learning_rate=0.05,
-            max_leaf_nodes=7,
-            random_state=seed,
-        ),
-    )
+    return predictions.drop(columns="_order").reset_index(drop=True), metrics
