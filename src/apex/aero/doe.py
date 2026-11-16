@@ -16,11 +16,18 @@ def latin_hypercube(n: int, bounds: dict[str, tuple[float, float]] = DEFAULT_BOU
     return df.round(4)
 
 
-def run_sheet(df: pd.DataFrame, rho: float = 1.225, velocity_ms: float = 50.0) -> pd.DataFrame:
-    """Case list to hand to ANSYS Fluent (one row per run). Fill cd/cl/residual columns after solving."""
+SOLVERS = ("ansys_fluent", "star_ccm")
+
+
+def run_sheet(df: pd.DataFrame, rho: float = 1.225, velocity_ms: float = 50.0,
+              solver: str = "ansys_fluent") -> pd.DataFrame:
+    """Case list to hand to the CFD solver (one row per run). Fill cd/cl/residual columns after solving,
+    then change provenance from '<solver>_pending' to '<solver>'."""
+    if solver not in SOLVERS:
+        raise ValueError(f"solver must be one of {SOLVERS}")
     out = df.copy()
     out["rho"], out["velocity_ms"] = rho, velocity_ms
     for c in ("mesh_cells", "solver_setup", "residual_max", "converged", "cd", "cl"):
         out[c] = np.nan
-    out["provenance"] = "ansys_fluent_pending"
+    out["provenance"] = f"{solver}_pending"
     return out

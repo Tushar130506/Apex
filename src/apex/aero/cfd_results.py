@@ -3,7 +3,7 @@ from __future__ import annotations
 import pandas as pd
 from apex.schemas.contracts import AERO_COLUMNS, ContractError
 
-REAL_PROVENANCE = ("ansys_fluent",)
+REAL_PROVENANCE = ("ansys_fluent", "star_ccm")
 
 
 def validate_cfd(df: pd.DataFrame, residual_tol: float = 1e-3, allowed_provenance=REAL_PROVENANCE) -> pd.DataFrame:
@@ -13,6 +13,8 @@ def validate_cfd(df: pd.DataFrame, residual_tol: float = 1e-3, allowed_provenanc
     bad_prov = set(df["provenance"]) - set(allowed_provenance)
     if bad_prov:
         raise ContractError(f"provenance {sorted(bad_prov)} not allowed (expected {list(allowed_provenance)})")
+    if df["provenance"].nunique() > 1:
+        raise ContractError("one surrogate table must come from a single solver; do not mix provenance values")
     if df["geometry_id"].duplicated().any():
         raise ContractError("duplicate geometry_id")
     if df[["cd", "cl", "rho", "velocity_ms"]].isna().any().any():
