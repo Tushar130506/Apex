@@ -19,6 +19,7 @@ import sys
 import pandas as pd
 
 sys.path.insert(0, "src")
+from apex.models.championship import describe_title_chances
 from apex.models.forecast import append_results, season_outlook
 from apex.models.plackett_luce import win_probabilities
 
@@ -31,6 +32,8 @@ def main() -> None:
     parser.add_argument("--remaining", nargs="+", required=True, help='"YYYY_round=Event name" for each race still to run')
     parser.add_argument("--sprint-rounds", nargs="*", default=[], help="race ids among --remaining that hold a sprint")
     parser.add_argument("--sprint-results", default=None, help="parquet or CSV of completed sprint results (scripts/build_race_results.py --event-type sprint)")
+    parser.add_argument("--driver", nargs="*", default=[], help="driver codes to describe, e.g. VER NOR")
+    parser.add_argument("--team", nargs="*", default=[], help="team names to describe, e.g. Ferrari")
     parser.add_argument("--simulations", type=int, default=20000)
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--out", default=None)
@@ -81,6 +84,10 @@ def main() -> None:
     print("\nConstructor championship:\n", outlook.championship.constructor.to_string(index=False, float_format=fmt))
     top = races.sort_values(["race_id", "race_probability"], ascending=[True, False]).groupby("race_id").head(5)
     print("\nRemaining races (form-only win probability):\n", top[["race_id", "track", "driver", "team", "race_probability"]].to_string(index=False, float_format=fmt))
+    for name in args.driver:
+        print("\n" + describe_title_chances(outlook.championship, name))
+    for name in args.team:
+        print("\n" + describe_title_chances(outlook.championship, name, constructor=True))
 
 
 if __name__ == "__main__":

@@ -31,6 +31,83 @@ class ChampionshipForecast:
     projected_sprints: int = 0
 
 
+def title_status(current_points: pd.Series, max_gain: float) -> pd.DataFrame:
+    """Whether each entrant can still win, from points alone.
+
+    ``max_gain`` is the most one entrant can still score. An entrant is
+    eliminated when even scoring all of it leaves them below someone's current
+    total, and has clinched when no rival can reach their current total.
+    Draws on points are settled by countback, which is unknown in advance, so
+    a possible draw keeps both sides open. With a full grid there are always
+    enough other cars to take the lower places, so these bounds are exact.
+    """
+    points = current_points.astype(float).to_numpy()
+    best = points + max_gain
+    leader = points.max() if len(points) else 0.0
+    status = []
+    for index, value in enumerate(points):
+        others = np.delete(points, index)
+        others_best = np.delete(best, index)
+        if len(others) and best[index] < others.max():
+            status.append("eliminated")
+        elif not len(others) or value > others_best.max():
+            status.append("clinched")
+        else:
+            status.append("contender")
+    return pd.DataFrame(
+        {
+            "max_possible_points": best,
+            "points_behind_leader": leader - points,
+            "title_status": status,
+        },
+        index=current_points.index,
+    )
+
+
+def describe_title_chances(
+    forecast: "ChampionshipForecast", name: str, constructor: bool = False
+) -> str:
+    """One plain sentence on a driver's or team's title chances."""
+    frame = forecast.constructor if constructor else forecast.driver
+    key = "team" if constructor else "driver"
+    rows = frame[frame[key].astype(str).str.upper() == name.upper()]
+    if rows.empty:
+        raise ValueError(f"{name} is not in the forecast")
+    row = rows.iloc[0]
+    label = str(row[key])
+    leader = frame.sort_values("current_points", ascending=False).iloc[0]
+    left = f"{forecast.projected_races} race(s)"
+    if forecast.projected_sprints:
+        left += f" and {forecast.projected_sprints} sprint(s)"
+    points = f"{row.current_points:.0f} points"
+    if row.title_status == "clinched":
+        return f"{label} has won the title: {points}, and no rival can reach that with {left} left."
+    if row.title_status == "eliminated":
+        text = (
+            f"{label} can no longer win the title: {points}, at most {row.max_possible_points:.0f} "
+            f"with {left} left, and {leader[key]} already has {leader.current_points:.0f}."
+        )
+        if not constructor:
+            text += f" Chance of finishing in the top three: {100 * row.top_three_probability:.1f}%."
+        return text
+    if row.win_probability > 0:
+        chance = f"{100 * row.win_probability:.1f}% chance of the title"
+    else:
+        chance = (
+            f"under {100 / forecast.simulations:.2g}% chance of the title "
+            f"(no win in {forecast.simulations:,} simulations)"
+        )
+    gap = (
+        "leads the standings"
+        if row.points_behind_leader == 0
+        else f"is {row.points_behind_leader:.0f} behind {leader[key]}"
+    )
+    return (
+        f"{label}: {chance}. The title is still mathematically open: {points}, "
+        f"{gap}, at most {row.max_possible_points:.0f} with {left} left."
+    )
+
+
 def _race_order(race_id: pd.Series) -> pd.Series:
     parts = race_id.astype(str).str.extract(r"^(?P<season>\d{4})_(?P<round>\d+)$")
     if parts.isna().any().any():
@@ -238,6 +315,12 @@ def forecast_championship(
                 np.add.at(driver_counts, (rows, entrants[orders], slots), 1.0)
                 np.add.at(team_counts, (rows, entrant_teams[orders], slots), 1.0)
 
+    projected_races = int(future["race_id"].nunique())
+    driver_gain = projected_races * RACE_POINTS[0] + projected_sprints * SPRINT_POINTS[0]
+    team_gain = (
+        projected_races * (RACE_POINTS[0] + RACE_POINTS[1])
+        + projected_sprints * (SPRINT_POINTS[0] + SPRINT_POINTS[1])
+    )
     driver_ranks = countback_ranks(driver_points, driver_counts)
     team_ranks = countback_ranks(team_points, team_counts)
     driver_frame = pd.DataFrame(
@@ -252,7 +335,8 @@ def forecast_championship(
             "top_three_probability": (driver_ranks < 3).mean(axis=0),
             "expected_final_position": driver_ranks.mean(axis=0) + 1.0,
         }
-    ).sort_values(
+    )
+    driver_frame = driver_frame.join(title_status(driver_frame["current_points"], driver_gain)).sort_values(
         ["win_probability", "expected_final_points", "driver"], ascending=[False, False, True]
     )
     constructor_frame = pd.DataFrame(
@@ -265,6 +349,9 @@ def forecast_championship(
             "win_probability": (team_ranks == 0).mean(axis=0),
             "expected_final_position": team_ranks.mean(axis=0) + 1.0,
         }
+    )
+    constructor_frame = constructor_frame.join(
+        title_status(constructor_frame["current_points"], team_gain)
     ).sort_values(
         ["win_probability", "expected_final_points", "team"], ascending=[False, False, True]
     )
@@ -273,7 +360,7 @@ def forecast_championship(
         constructor=constructor_frame.reset_index(drop=True),
         simulations=simulations,
         completed_races=int(completed["race_id"].nunique()),
-        projected_races=int(future["race_id"].nunique()),
+        projected_races=projected_races,
         projected_sprints=projected_sprints,
     )
 
@@ -282,6 +369,8 @@ __all__ = [
     "ChampionshipForecast",
     "RACE_POINTS",
     "countback_ranks",
+    "describe_title_chances",
     "forecast_championship",
     "sample_orders",
+    "title_status",
 ]

@@ -571,7 +571,7 @@ with tabs[1]:
         forecast_driver["win_probability_pct"] = forecast_driver["win_probability"] * 100
         forecast_driver["top_three_probability_pct"] = forecast_driver["top_three_probability"] * 100
         st.dataframe(
-            forecast_driver[["driver", "current_points", "expected_final_points", "win_probability_pct", "top_three_probability_pct"]],
+            forecast_driver[[c for c in ("driver", "current_points", "max_possible_points", "title_status", "expected_final_points", "win_probability_pct", "top_three_probability_pct") if c in forecast_driver]],
             use_container_width=True,
             hide_index=True,
             column_config={
@@ -582,7 +582,7 @@ with tabs[1]:
         forecast_constructor = wcc_forecast.copy()
         forecast_constructor["win_probability_pct"] = forecast_constructor["win_probability"] * 100
         st.dataframe(
-            forecast_constructor[["team", "current_points", "expected_final_points", "win_probability_pct"]],
+            forecast_constructor[[c for c in ("team", "current_points", "max_possible_points", "title_status", "expected_final_points", "win_probability_pct") if c in forecast_constructor]],
             use_container_width=True,
             hide_index=True,
             column_config={

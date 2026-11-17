@@ -46,3 +46,56 @@ def test_championship_rejects_overlap():
     predictions = pd.DataFrame([{"race_id": "2026_1", "driver": "A", "team": "X", "score": 1.0}])
     with pytest.raises(ValueError, match="overlap"):
         forecast_championship(rows, predictions)
+
+
+def _three_way(points, races):
+    from apex.models.championship import title_status
+    return title_status(pd.Series(points, index=list("ABC")), races * 25)
+
+
+def test_title_status_marks_clinched_contender_and_eliminated():
+    status = _three_way([100, 60, 40], races=2)
+    assert status["title_status"].tolist() == ["contender", "contender", "eliminated"]
+    assert status["max_possible_points"].tolist() == [150, 110, 90]
+    assert status["points_behind_leader"].tolist() == [0, 40, 60]
+    assert _three_way([100, 49, 40], races=2)["title_status"].tolist() == ["clinched", "eliminated", "eliminated"]
+
+
+def test_a_possible_draw_on_points_stays_open():
+    # B can reach 100 exactly; countback could still decide for B.
+    assert _three_way([100, 50, 0], races=2)["title_status"].tolist()[:2] == ["contender", "contender"]
+
+
+def _season(points_a, points_b, races):
+    completed = pd.DataFrame(
+        [
+            {"race_id": "2026_1", "driver": "A", "team": "X", "points": points_a},
+            {"race_id": "2026_1", "driver": "B", "team": "Y", "points": points_b},
+            {"race_id": "2026_1", "driver": "C", "team": "Z", "points": 0},
+        ]
+    )
+    future = pd.DataFrame(
+        [
+            {"race_id": f"2026_{number}", "driver": driver, "team": team, "score": score}
+            for number in range(2, 2 + races)
+            for driver, team, score in (("A", "X", 0.98), ("B", "Y", 0.01), ("C", "Z", 0.01))
+        ]
+    )
+    return forecast_championship(completed, future, simulations=400, seed=1)
+
+
+def test_simulation_agrees_with_title_status_and_sentences_say_so():
+    from apex.models.championship import describe_title_chances
+    forecast = _season(60, 50, races=2)
+    drivers = forecast.driver.set_index("driver")
+    assert drivers.loc["C", "title_status"] == "eliminated" and drivers.loc["C", "win_probability"] == 0
+    assert drivers.loc["B", "title_status"] == "contender"
+    assert "can no longer win" in describe_title_chances(forecast, "c")
+    assert "still mathematically open" in describe_title_chances(forecast, "B")
+    assert "under" in describe_title_chances(forecast, "B") or drivers.loc["B", "win_probability"] > 0
+    assert forecast.constructor.set_index("team").loc["Z", "max_possible_points"] == 2 * 43
+    clinched = _season(200, 50, races=2)
+    assert clinched.driver.set_index("driver").loc["A", "win_probability"] == 1
+    assert "has won the title" in describe_title_chances(clinched, "A")
+    with pytest.raises(ValueError):
+        describe_title_chances(clinched, "ZZZ")
