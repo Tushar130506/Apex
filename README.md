@@ -1,193 +1,207 @@
-# APEX - FastF1 race-pace ML + strategy + aero surrogate
+# APEX - F1 race prediction, strategy and aero from FastF1 data
 
-**Pure FastF1.** No game telemetry, no generated datasets, no dashboard. The repo ships with *no data*;
-you import it with FastF1. (`tests/fixtures.py` holds fake laps used only by unit tests; training refuses them.)
+APEX has four parts:
+
+| Part | What it does | State |
+|---|---|---|
+| Race model | Predicts finishing order, win and podium probabilities, and both championships. | Evaluated on 133 races; see `RACE_MODEL_REPORT.md`. |
+| Lap-pace model | Predicts the next lap time in a stint, with 90% intervals. | Works; needs imported lap data. |
+| Strategy simulator | Compares pit-stop strategies for one car by Monte Carlo. | Simplified: no traffic, default assumptions. |
+| Aero surrogate | Fits drag and downforce from CFD runs and estimates lap-time effect. | Code only; no CFD results in the repo yet. |
+
+All race data comes from [FastF1](https://docs.fastf1.dev/). The repository
+ships no lap data; you import it yourself. `tests/fixtures.py` holds fake laps
+for unit tests only, and training refuses them.
+
+## Install and test
 
 ```bash
-pip install -e ".[ml,fastf1,app,dev]"
-pytest
-
-# Browse all processed seasons with filters and CSV export
-pip install -e ".[dashboard]"
-python materialize_fastf1.py
-streamlit run streamlit_dashboard.py
-
-# 1. import real data, one file per season  -> data/processed/laps_<year>.parquet
-python scripts/build_dataset.py season 2022 2023 2024 2025
-# Cache every FastF1 session (resumable; telemetry is optional and large)
-python scripts/build_dataset.py cache 2018 2019 2020 2021 2022 2023 2024 2025 --sessions all --telemetry
-# 2. train / validate / test year-wise (years in configs/split.json or via flags)
-python scripts/train.py --run-name pace_v1
-# 3. score laps with a saved run (e.g. a newer season) and store predictions
-python scripts/predict.py --run runs/pace_v1 --years 2025 --out data/predictions/pace_v1/scored_2025.parquet
+pip install -e ".[ml,fastf1,app,dashboard,dev]"
 ```
 
-## Where things go
-| Path | What |
-|---|---|
-| `data/processed/laps_<year>.parquet` | cleaned FastF1 laps per season (contract in `schemas/contracts.py`) |
-| `configs/split.json` | which seasons are train / validation / test |
-| `runs/<name>/` | `model.joblib` (GBM + conformal + fitted pace model), `metrics.json`, `config.json` |
-| `data/predictions/<name>/predictions.parquet` | every scored lap labelled `train`/`val`/`test`: actual, baselines, GBM, 90% interval, in_interval, error |
-| `.fastf1-cache/` | FastF1 download cache (first import is slow) |
+```bash
+pytest
+```
 
-## How the year-wise protocol works
-- **train** seasons fit the GBM and the strategy pace model. **val** seasons calibrate the conformal intervals and
-  are where you compare models/features. **test** seasons are reported alongside but must be read once, after choices are frozen.
-- Default: train 2022-23, val 2024, test 2025 (same ground-effect era). 2026 is a new regulation era: scoring it will
-  set `season_seen_in_training=False` - treat results as out-of-domain.
-- Targets are one-step-ahead: each lap is predicted from earlier clean laps in its stint. Baselines: previous lap and rolling mean.
+CI runs the same tests on every push (`.github/workflows/ci.yml`).
 
 ## Race model
 
-The current race model, its walk-forward results and its remaining limits are
-in `RACE_MODEL_REPORT.md`. In short: a Plackett-Luce finish-order model,
-61.7% winner accuracy over 133 walk-forward races (pole-sitter: 56.4%), and
-calibrated win probabilities with no ties or zeros.
+A Plackett-Luce finish-order model: 61.7% winner accuracy over 133
+walk-forward races against 56.4% for picking the pole-sitter, with calibrated
+win probabilities. The accuracy edge is not statistically established; the
+gain in probability quality is. Results, protocol and limits are in
+`RACE_MODEL_REPORT.md`.
+
+The scripts below read `runs/walk_forward_championship/input_features.parquet`,
+a race-level feature table that is committed (2018 to 2026 round 19), so they
+run without downloading anything.
 
 ```bash
 # Walk-forward evaluation against baselines (2021 onward)
 python scripts/evaluate_race_model.py
+```
+
+```bash
 # Title-race checkpoints before every race
 python scripts/walk_forward_championship.py
+```
+
+```bash
 # Forecast a race that has not been run (add --entries grid.csv after qualifying)
 python scripts/predict_race.py --race-id 2026_21 --track "Las Vegas Grand Prix"
+```
+
+```bash
 # Remaining races and both championships
 python scripts/forecast_season.py --season 2026 \
   --remaining "2026_21=Las Vegas Grand Prix" "2026_22=Qatar Grand Prix"
 ```
 
+`predict_race.py` and `forecast_season.py` accept `--extra-results` for
+official results of races missing from the feature table
+(`race_id, track, driver, team, grid_position, finish_position, status`).
+
+### Rebuilding the feature table
+
+This needs network access to the FastF1 data servers.
+
+```bash
+# 1. Laps for every session, one file per season -> data/processed/laps_<year>.parquet
+python download_fastf1.py --years 2018-2026 --sessions all
+python materialize_fastf1.py
+```
+
+```bash
+# 2. Official race results
+python scripts/build_race_results.py 2018 2019 2020 2021 2022 2023 2024 2025 \
+  --out data/processed/race_results_2018_2025_team.parquet
+python scripts/build_race_results.py 2026 --out data/processed/race_results_2026_team.parquet
+```
+
+```bash
+# 3. Race-level features -> <out>/input_features.parquet
+python scripts/walk_forward_winner.py --season 2026 --half-races 9 \
+  --results data/processed/race_results_2018_2025_team.parquet \
+  --future-results data/processed/race_results_2026_team.parquet \
+  --out runs/walk_forward_championship
+```
+
+`walk_forward_winner.py` reads one season of laps at a time and reduces it to
+race-level rows before loading the next, so the full history never has to fit
+in memory. `build_race_results.py` fails if any round cannot be loaded; pass
+`--allow-skips` only when a partial file is acceptable.
+
+## Lap-pace model
+
+```bash
+# 1. Import race laps, one file per season -> data/processed/laps_<year>.parquet
+python scripts/build_dataset.py season 2022 2023 2024 2025
+```
+
+```bash
+# 2. Train, calibrate and report (years from configs/split.json or flags)
+python scripts/train.py --run-name pace_v1
+```
+
+```bash
+# 3. Score laps with a saved run
+python scripts/predict.py --run runs/pace_v1 --years 2025 \
+  --out data/predictions/pace_v1/scored_2025.parquet
+```
+
+- **Split by season:** train seasons fit the model, validation seasons
+  calibrate the intervals and are where models are compared, and test seasons
+  are read once after choices are frozen. Default: train 2022-23, validation
+  2024, test 2025.
+- **2026 is a new regulation era:** scoring it sets
+  `season_seen_in_training=False`; treat those results as out-of-domain.
+- **One step ahead:** each lap is predicted from earlier clean laps in its
+  stint. Baselines are the previous lap and a rolling mean.
+
+Try `python scripts/build_dataset.py season 2024 --max-events 3` first; the
+first import is slow. `build_dataset.py cache <years> --sessions all
+--telemetry` fills the FastF1 cache with every session (telemetry is large and
+not yet used by any model).
+
+## Dashboard and API
+
+```bash
+streamlit run streamlit_dashboard.py
+```
+
+The dashboard reads stored predictions and forecasts from `runs/`, and lap and
+result files from `data/processed/` when they exist.
+
+```bash
+APEX_RUN=runs/pace_v1 uvicorn apex.api.app:app
+```
+
+The optional strategy API uses the pace model fitted by that run.
+
+## Where things are
+
+| Path | What |
+|---|---|
+| `src/apex/` | The library (modules below) |
+| `scripts/` | Command-line entry points for the current pipeline |
+| `scripts/legacy/` | Scripts for the earlier winner classifier; see its README |
+| `configs/split.json` | Train, validation and test seasons for the lap-pace model |
+| `data/processed/` | Imported laps and race results (not committed) |
+| `runs/<name>/` | Stored models, metrics, predictions and forecasts |
+| `.fastf1-cache/` | FastF1 download cache (not committed) |
+
 | Module | Responsibility |
 |---|---|
+| `apex.ingestion.fastf1_loader` | FastF1 sessions to the lap contract in `apex.schemas.contracts` |
 | `apex.features.form_features` | Race-relative weekend features and prior-race form |
+| `apex.features.winner_features` | Per-race rows from laps: practice and qualifying pace, results join |
 | `apex.models.plackett_luce` | Exploded-logit loss, linear and boosted models, temperature fit |
-| `apex.models.race_order` | Blended model, walk-forward loop, metrics |
+| `apex.models.race_order` | Blended race model, walk-forward loop, metrics |
 | `apex.models.forecast` | Unrun-race forecasts and season outlook |
 | `apex.models.championship` | Title simulation with countback and sprint rounds |
+| `apex.models.points` | Grand Prix, sprint, shortened-race and disqualification scoring |
+| `apex.models.pace`, `apex.features.lap_features` | Lap-pace GBM, conformal intervals, lap features |
+| `apex.features.fuel` | Fuel correction and fuel-burn sampling |
+| `apex.features.tyre_degradation`, `apex.models.degradation` | Degradation by compound and by stint |
+| `apex.strategy` | Parametric pace model and pit-strategy simulator |
+| `apex.models.race_monte_carlo`, `apex.models.safety_hazard` | Lap-level race simulation and safety-car hazard |
+| `apex.models.replay` | Leakage-safe lap-by-lap replay of a finished race |
+| `apex.ingestion.live_timing` | Live event contract; no feed is connected |
+| `apex.aero`, `apex.models.aero_surrogate` | CFD run sheets, result checks, surrogate, lap-time estimate |
+| `apex.models.winner` | Earlier winner classifier, kept as a baseline |
 
-`scripts/train_winner.py` and `scripts/repeated_holdout_winner.py` still train
-the earlier winner classifier and are kept as a baseline. The sections below
-describe that earlier work; where they disagree with `RACE_MODEL_REPORT.md`,
-the report is current.
+## Aero
 
-## v0.2 race-winner foundation
+`apex.aero.doe.run_sheet` writes the list of CFD cases to run. After solving,
+fill in the coefficients and convergence columns; `validate_cfd` accepts only
+rows marked `openfoam` (the default), `ansys_fluent` or `star_ccm`, one solver
+per table. The lap-time estimate uses a generic car on a made-up circuit, so
+it compares designs under the same assumptions and is not a prediction for a
+real car. Candidates proposed by the surrogate must be re-run in CFD.
 
-`APEX_RACE_WINNER_CONTEXT.md` defines the holdout-safe plan for race-winner
-prediction. The first implementation slice is available through
-`apex.features.race_features.build_race_features`: it aggregates clean laps into
-driver/session rows, calculates fuel-adjusted pace with an explicit sensitivity
-assumption, and carries robust stint degradation estimates plus fuel provenance.
+## Limits
 
-This is intentionally not a winner model yet. Official race results, qualifying
-or grid position, and verified race-session identity must be joined before
-training a race-level ranking model. Full-stint degradation is retrospective and
-must not be used as a pre-race feature; use earlier-session degradation for
-pre-race scoring and current-stint history only for live prediction.
+- **Winner accuracy:** the race model does not reliably beat the pole-sitter
+  on the top pick (2025: worse, 2026: equal).
+- **Missing data:** no sprint results, no pre-race weather forecasts, and the
+  feature table ends at 2026 round 19. Championship points are race points
+  only.
+- **Fuel is estimated:** FastF1 has no fuel data, so fuel mass is a linear
+  burn from an assumed start load, and the fuel sensitivity is an assumption.
+- **Points:** derived from classified finishing position on the 25-18-15-12-10-8-6-4-2-1
+  scale, with no fastest-lap bonus. Sprint rows must be materialized as
+  `event_type="sprint"` before they count.
+- **Confounders in lap pace:** driver, team, circuit, weather and traffic;
+  read `mae_by_track` and `mae_by_compound` in a run's `metrics.json`.
+- **Strategy and race simulation:** no traffic, no full strategy search, no
+  incident-specific retirement hazards, and no live timing feed.
 
-To materialize official results from the FastF1 cache:
+## Other documents
 
-```bash
-python scripts/build_race_results.py 2022 2023 2024 2025
-python scripts/train_winner.py --train-years 2022 2023 --val-years 2024 --test-years 2025
-python scripts/repeated_holdout_winner.py
-# Walk-forward: seed with half of a season, then add each completed race
-# before predicting the next one.
-python scripts/walk_forward_winner.py --season 2025 \
-  --results data/processed/race_results_2018_2025_team.parquet
-```
-
-### Race, WDC, and constructor forecasts
-
-The winner predictions can be converted into a championship forecast with a
-chronological Plackett-Luce Monte Carlo simulation. Completed points are kept
-fixed; each future race is sampled without replacement from its predicted
-driver strengths, then official race points are accumulated for both drivers
-and teams:
-
-```bash
-python scripts/forecast_championship.py \
-  --completed data/processed/race_results_2026_team.parquet \
-  --future-predictions runs/winner_walk_forward_2026_mexico/2026_predictions.parquet \
-  --as-of-race 9 \
-  --out runs/championship_forecast_2026_as_of_9
-```
-
-Use `--as-of-race` for historical replay validation. It prevents results after
-the chosen timestamp from becoming current points and prevents earlier
-predictions from being treated as future races. The output contains driver WDC
-win/top-three probabilities, constructor win probabilities, and expected final
-points. The prediction file itself must also have been generated using only
-data available at that timestamp; filtering a later walk-forward artifact
-does not undo look-ahead in how its later predictions were trained. A forecast
-is only meaningful when predictions exist for every remaining race; the
-current Mexico artifact covers rounds 10--19 only.
-
-`apex.models.replay.replay_snapshots` provides the leakage-safe replay
-boundary: at lap `t`, pit stops, tyre state, lap times, and safety-car events
-are calculated only from rows with `lap_no <= t`. This is the foundation for
-re-running the race Monte Carlo after each observed lap. FastF1 cache data is
-historical; a live feed adapter is still required for real-time operation.
-
-The walk-forward runner reads `laps_<year>.parquet` one season at a time,
-converts it immediately to compact race-level features, and releases the raw
-lap table before loading the next season. This is the recommended weekly
-retraining path because it is reproducible and does not require loading the
-entire historical cache into memory.
-
-Result materialization fails if any round cannot be loaded. Use
-`--allow-skips` only when a partial result file is explicitly acceptable.
-
-Grid position is now included as a pre-race winner feature. In the repeated
-holdout run it improved 2025 accuracy from 58.3% to 66.7%; this remains a
-validation result, not a production guarantee.
-
-Points are derived from classified finishing position rather than imported
-fastest-lap flags or unverified source totals. Grand Prix points use the
-top-ten 25-18-15-12-10-8-6-4-2-1 scale; sprint rows use 8-7-6-5-4-3-2-1;
-disqualified/unclassified rows score zero; and no fastest-lap bonus is added.
-Shortened-race scaling is supported through `distance_fraction` when that
-field is available. Sprint results must be materialized as separate
-`event_type="sprint"` rows before they can affect championship forecasts.
-
-The reproducible baseline split is chronological and fixed before inspection:
-2018-2023 train, 2024 validation, and 2025 test. This keeps the test season
-untouched and gives the model multiple regulation-era examples while leaving
-the latest completed season for final evaluation. The 2026 walk-forward run is
-the separate future-era check.
-
-Practice and qualifying are now represented by separate pace, best-lap, rank,
-and gap features. The full labeled-data model is saved by the repeated holdout
-runner under `runs/winner_repeated_sessions/`; future inference must provide
-grid position from a pre-race source rather than importing finishing results.
-
-## Caveats
-- The race model does not reliably beat picking the pole-sitter on winner accuracy (2025: worse, 2026: equal). Its measured edge is in probability quality.
-- Processed data has no sprint results and no pre-race weather forecasts; championship points are race points only.
-- Fuel mass is an estimate (linear burn); FastF1 has no fuel data. Neutralised/pit/inaccurate laps are excluded with a stored reason.
-- Driver, team, circuit, weather and traffic are confounders: read `mae_by_track` / `mae_by_compound` in `metrics.json`.
-- Not yet run against the live FastF1 API in the build environment; run `season 2024 --max-events 3` first.
-- Aero (`src/apex/aero`) needs your own CFD results; `validate_cfd` accepts only rows marked `openfoam` (the default), `ansys_fluent` or `star_ccm`, one solver per table.
-- Optional strategy API: `APEX_RUN=runs/pace_v1 uvicorn apex.api.app:app` uses the run's fitted pace model.
-
-## Current race-intelligence modules
-
-The race system is split by responsibility so each feature has one clear source:
-
-| Module | Responsibility |
+| File | Content |
 |---|---|
-| `apex.features.fuel` | Fuel correction and uncertain fuel-burn sampling |
-| `apex.features.tyre_degradation` | Compound-specific linear/quadratic degradation |
-| `apex.models.race_monte_carlo` | Race-winner probabilities with fuel, tyres, and safety-car uncertainty |
-| `apex.models.safety_hazard` | Historical lap-level safety-car hazard estimation |
-| `apex.models.calibration` | Chronological temperature calibration |
-| `apex.models.points` | Grand Prix, sprint, shortened-race, and disqualification scoring |
-| `apex.models.overfit` | Train/validation/test overfit and underfit warnings |
-| `apex.ingestion.live_timing` | Provider-neutral live event/state contract and replay |
-
-The Monte Carlo race layer is validated as a probability layer, but it is
-still a simplified race model: it does not yet include a real-time timing
-provider, full strategy search, traffic, or incident-specific retirement
-hazards. `live_timing.py` is therefore an integration boundary, not a claim
-that a live feed is already connected. Historical sprint rows and reliable
-race-distance fractions must also be materialized before they can affect
-championship forecasts.
+| `RACE_MODEL_REPORT.md` | Current race model: design, results, calibration, forecasts |
+| `scripts/legacy/README.md` | What the legacy scripts were and what replaced them |
+| `WINNER_WALK_FORWARD_2026_MEXICO_REPORT.md` | Earlier classifier's 2026 results (history) |
+| `WINNER_MODEL_FEATURE_SPEC.md`, `APEX_RACE_WINNER_CONTEXT.md` | Earlier feature spec and leakage rules |

@@ -2,7 +2,7 @@
 """Train and evaluate the chronological race-winner baseline.
 
 Example:
-  python scripts/train_winner.py --train-years 2022 2023 --val-years 2024 --test-years 2025
+  python scripts/legacy/train_winner.py --train-years 2022 2023 --val-years 2024 --test-years 2025
 """
 from __future__ import annotations
 

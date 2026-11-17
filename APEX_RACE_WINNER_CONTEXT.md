@@ -18,7 +18,7 @@ pace must be calculated before a winner model is trained.
 - Support either a supplied `race_id` column or `session_id` as a safe fallback
   grouping key. Do not silently combine unrelated sessions.
 - Use the official-result, winner-feature, and race-session workflow implemented
-  by `scripts/build_race_results.py` and `scripts/train_winner.py`.
+  by `scripts/build_race_results.py` and `scripts/legacy/train_winner.py`.
 
 ## Holdout and leakage rules
 
