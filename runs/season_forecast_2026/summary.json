@@ -1,16 +1,12 @@
 {
   "season": 2026,
   "simulations": 20000,
-  "completed_races": 19,
-  "projected_races": 4,
+  "completed_races": 20,
+  "projected_races": 3,
   "projected_sprints": 0,
-  "form_temperature": 1.0645450336633002,
-  "form_drift_per_race": 0.21063973513137765,
+  "form_temperature": 1.0696825922879984,
+  "form_drift_per_race": 0.20804546331441964,
   "remaining": [
-    {
-      "race_id": "2026_20",
-      "track": "S\u00e3o Paulo Grand Prix"
-    },
     {
       "race_id": "2026_21",
       "track": "Las Vegas Grand Prix"

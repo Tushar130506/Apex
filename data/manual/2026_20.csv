@@ -1,0 +1,23 @@
+race_id,track,driver,team,grid_position,finish_position,status
+2026_20,São Paulo Grand Prix,NOR,McLaren,1.0,1.0,Finished
+2026_20,São Paulo Grand Prix,VER,Red Bull Racing,21.0,2.0,Finished
+2026_20,São Paulo Grand Prix,HAD,Red Bull Racing,5.0,3.0,Finished
+2026_20,São Paulo Grand Prix,RUS,Mercedes,7.0,4.0,Finished
+2026_20,São Paulo Grand Prix,ANT,Mercedes,2.0,5.0,Finished
+2026_20,São Paulo Grand Prix,PIA,McLaren,10.0,6.0,Finished
+2026_20,São Paulo Grand Prix,LAW,Racing Bulls,3.0,7.0,Finished
+2026_20,São Paulo Grand Prix,LEC,Ferrari,14.0,8.0,Finished
+2026_20,São Paulo Grand Prix,HAM,Ferrari,20.0,9.0,Lapped
+2026_20,São Paulo Grand Prix,HUL,Audi,4.0,10.0,Lapped
+2026_20,São Paulo Grand Prix,LIN,Racing Bulls,18.0,11.0,Lapped
+2026_20,São Paulo Grand Prix,ALO,Aston Martin,8.0,12.0,Lapped
+2026_20,São Paulo Grand Prix,COL,Alpine,13.0,13.0,Lapped
+2026_20,São Paulo Grand Prix,GAS,Alpine,15.0,14.0,Lapped
+2026_20,São Paulo Grand Prix,ALB,Williams,9.0,15.0,Lapped
+2026_20,São Paulo Grand Prix,BOR,Audi,19.0,16.0,Lapped
+2026_20,São Paulo Grand Prix,BEA,Haas F1 Team,6.0,17.0,Lapped
+2026_20,São Paulo Grand Prix,PER,Cadillac,22.0,18.0,Lapped
+2026_20,São Paulo Grand Prix,SAI,Williams,12.0,19.0,Lapped
+2026_20,São Paulo Grand Prix,CAM,Haas F1 Team,11.0,20.0,Lapped
+2026_20,São Paulo Grand Prix,STR,Aston Martin,16.0,21.0,Retired
+2026_20,São Paulo Grand Prix,BOT,Cadillac,17.0,22.0,Did not start

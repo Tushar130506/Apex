@@ -64,7 +64,9 @@ official results of races missing from the feature table
 
 ### Rebuilding the data
 
-This needs network access to the FastF1 data servers.
+This needs network access to the FastF1 data servers. Lap timing also needs an
+F1TV account: set `F1_USERNAME` and `F1_PASSWORD` in your shell before
+running it (never commit them). Official results need no account.
 
 ```bash
 python scripts/rebuild_data.py
@@ -83,6 +85,18 @@ It runs five steps in order and stops at the first one that fails:
 Run it again after a race weekend to add the new round. `--from-step results`
 skips the download, `--dry-run` prints the commands, and `--first-year` and
 `--last-year` set the range (default 2018 to the current year).
+
+Without an F1TV account, new races can still be added from official results
+alone; they then feed prior-race form but carry no practice or qualifying
+pace:
+
+```bash
+python scripts/build_race_results.py 2026 --out data/processed/race_results_2026.parquet
+python scripts/export_extra_results.py --results data/processed/race_results_2026.parquet
+```
+
+This writes `data/manual/<race_id>.csv` for each race newer than the feature
+table, ready for `--extra-results`.
 
 Sprint results are kept in their own file because a sprint shares its
 `race_id` with that weekend's Grand Prix. Pass the file to the season forecast
@@ -188,7 +202,7 @@ real car. Candidates proposed by the surrogate must be re-run in CFD.
 - **Winner accuracy:** the race model does not reliably beat the pole-sitter
   on the top pick (2025: worse, 2026: equal).
 - **Missing data:** no pre-race weather forecasts, and the committed feature
-  table ends at 2026 round 19. Sprint points count only when a sprint results
+  table ends at 2026 round 19 (round 20 is in `data/manual/` as results only). Sprint points count only when a sprint results
   file is passed to `forecast_season.py`; stored forecasts in `runs/` are race
   points only. Sprint results are not used as model features.
 - **Fuel is estimated:** FastF1 has no fuel data, so fuel mass is a linear

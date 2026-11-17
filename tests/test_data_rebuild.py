@@ -111,3 +111,18 @@ def test_rebuild_can_resume_and_skips_sprints_before_they_existed():
     assert [name for name, _ in resumed] == ["results", "sprints", "features"]
     early = rebuild.build_commands(rebuild.parse_args(["--first-year", "2018", "--last-year", "2019"]))
     assert "sprints" not in [name for name, _ in early]
+
+
+def test_export_keeps_only_races_newer_than_the_feature_table():
+    spec = importlib.util.spec_from_file_location("export_extra", ROOT / "scripts" / "export_extra_results.py")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    classification = _classification().assign(TeamName=["McLaren", "Red Bull", "Red Bull", "RB F1 Team"])
+    results = pd.concat([
+        pd.DataFrame(result_rows(classification, 2026, number, "Somewhere")) for number in (9, 19, 20)
+    ])
+    table = pd.DataFrame({"race_id": ["2025_24", "2026_9", "2026_19"]})
+    rows = module.missing_races(results, table)
+    assert set(rows["race_id"]) == {"2026_20"}
+    assert rows["team"].tolist() == ["McLaren", "Red Bull Racing", "Red Bull Racing", "Racing Bulls"]
+    assert list(rows.columns) == module.COLUMNS

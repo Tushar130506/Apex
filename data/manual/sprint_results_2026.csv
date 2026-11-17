@@ -1,0 +1,133 @@
+race_id,season,track,driver,finish_position,grid_position,classified,running_at_finish,points,derived_points,source_points,event_type,status,team
+2026_2,2026,Chinese Grand Prix,RUS,1.0,1.0,True,True,8.0,8.0,8.0,sprint,Finished,Mercedes
+2026_2,2026,Chinese Grand Prix,LEC,2.0,6.0,True,True,7.0,7.0,7.0,sprint,Finished,Ferrari
+2026_2,2026,Chinese Grand Prix,HAM,3.0,4.0,True,True,6.0,6.0,6.0,sprint,Finished,Ferrari
+2026_2,2026,Chinese Grand Prix,NOR,4.0,3.0,True,True,5.0,5.0,5.0,sprint,Finished,McLaren
+2026_2,2026,Chinese Grand Prix,ANT,5.0,2.0,True,True,4.0,4.0,4.0,sprint,Finished,Mercedes
+2026_2,2026,Chinese Grand Prix,PIA,6.0,5.0,True,True,3.0,3.0,3.0,sprint,Finished,McLaren
+2026_2,2026,Chinese Grand Prix,LAW,7.0,13.0,True,True,2.0,2.0,2.0,sprint,Finished,RB F1 Team
+2026_2,2026,Chinese Grand Prix,BEA,8.0,9.0,True,True,1.0,1.0,1.0,sprint,Finished,Haas F1 Team
+2026_2,2026,Chinese Grand Prix,VER,9.0,8.0,True,True,0.0,0.0,0.0,sprint,Finished,Red Bull
+2026_2,2026,Chinese Grand Prix,OCO,10.0,12.0,True,True,0.0,0.0,0.0,sprint,Finished,Haas F1 Team
+2026_2,2026,Chinese Grand Prix,GAS,11.0,7.0,True,True,0.0,0.0,0.0,sprint,Finished,Alpine F1 Team
+2026_2,2026,Chinese Grand Prix,SAI,12.0,17.0,True,True,0.0,0.0,0.0,sprint,Finished,Williams
+2026_2,2026,Chinese Grand Prix,BOR,13.0,14.0,True,True,0.0,0.0,0.0,sprint,Finished,Audi
+2026_2,2026,Chinese Grand Prix,COL,14.0,16.0,True,True,0.0,0.0,0.0,sprint,Finished,Alpine F1 Team
+2026_2,2026,Chinese Grand Prix,HAD,15.0,10.0,True,True,0.0,0.0,0.0,sprint,Finished,Red Bull
+2026_2,2026,Chinese Grand Prix,ALB,16.0,22.0,True,True,0.0,0.0,0.0,sprint,Finished,Williams
+2026_2,2026,Chinese Grand Prix,ALO,17.0,18.0,True,True,0.0,0.0,0.0,sprint,Finished,Aston Martin
+2026_2,2026,Chinese Grand Prix,STR,18.0,19.0,True,True,0.0,0.0,0.0,sprint,Finished,Aston Martin
+2026_2,2026,Chinese Grand Prix,PER,19.0,21.0,True,True,0.0,0.0,0.0,sprint,Finished,Cadillac F1 Team
+2026_2,2026,Chinese Grand Prix,HUL,20.0,11.0,False,False,0.0,0.0,0.0,sprint,Retired,Audi
+2026_2,2026,Chinese Grand Prix,BOT,21.0,20.0,False,False,0.0,0.0,0.0,sprint,Retired,Cadillac F1 Team
+2026_2,2026,Chinese Grand Prix,LIN,22.0,15.0,False,False,0.0,0.0,0.0,sprint,Retired,RB F1 Team
+2026_4,2026,Miami Grand Prix,NOR,1.0,1.0,True,True,8.0,8.0,8.0,sprint,Finished,McLaren
+2026_4,2026,Miami Grand Prix,PIA,2.0,3.0,True,True,7.0,7.0,7.0,sprint,Finished,McLaren
+2026_4,2026,Miami Grand Prix,LEC,3.0,4.0,True,True,6.0,6.0,6.0,sprint,Finished,Ferrari
+2026_4,2026,Miami Grand Prix,RUS,4.0,6.0,True,True,5.0,5.0,5.0,sprint,Finished,Mercedes
+2026_4,2026,Miami Grand Prix,VER,5.0,5.0,True,True,4.0,4.0,4.0,sprint,Finished,Red Bull
+2026_4,2026,Miami Grand Prix,ANT,6.0,2.0,True,True,3.0,3.0,3.0,sprint,Finished,Mercedes
+2026_4,2026,Miami Grand Prix,HAM,7.0,7.0,True,True,2.0,2.0,2.0,sprint,Finished,Ferrari
+2026_4,2026,Miami Grand Prix,GAS,8.0,10.0,True,True,1.0,1.0,1.0,sprint,Finished,Alpine F1 Team
+2026_4,2026,Miami Grand Prix,HAD,9.0,9.0,True,True,0.0,0.0,0.0,sprint,Finished,Red Bull
+2026_4,2026,Miami Grand Prix,COL,10.0,8.0,True,True,0.0,0.0,0.0,sprint,Finished,Alpine F1 Team
+2026_4,2026,Miami Grand Prix,OCO,11.0,16.0,True,True,0.0,0.0,0.0,sprint,Finished,Haas F1 Team
+2026_4,2026,Miami Grand Prix,BEA,12.0,13.0,True,True,0.0,0.0,0.0,sprint,Finished,Haas F1 Team
+2026_4,2026,Miami Grand Prix,SAI,13.0,14.0,True,True,0.0,0.0,0.0,sprint,Finished,Williams
+2026_4,2026,Miami Grand Prix,LAW,14.0,15.0,True,True,0.0,0.0,0.0,sprint,Finished,RB F1 Team
+2026_4,2026,Miami Grand Prix,ALO,15.0,20.0,True,True,0.0,0.0,0.0,sprint,Finished,Aston Martin
+2026_4,2026,Miami Grand Prix,PER,16.0,17.0,True,True,0.0,0.0,0.0,sprint,Finished,Cadillac F1 Team
+2026_4,2026,Miami Grand Prix,STR,17.0,21.0,True,True,0.0,0.0,0.0,sprint,Finished,Aston Martin
+2026_4,2026,Miami Grand Prix,ALB,18.0,18.0,True,True,0.0,0.0,0.0,sprint,Finished,Williams
+2026_4,2026,Miami Grand Prix,BOT,19.0,19.0,True,True,0.0,0.0,0.0,sprint,Finished,Cadillac F1 Team
+2026_4,2026,Miami Grand Prix,HUL,20.0,12.0,False,False,0.0,0.0,0.0,sprint,Did not start,Audi
+2026_4,2026,Miami Grand Prix,LIN,21.0,22.0,False,False,0.0,0.0,0.0,sprint,Did not start,RB F1 Team
+2026_4,2026,Miami Grand Prix,BOR,22.0,11.0,False,False,0.0,0.0,0.0,sprint,Disqualified,Audi
+2026_5,2026,Canadian Grand Prix,RUS,1.0,1.0,True,True,8.0,8.0,8.0,sprint,Finished,Mercedes
+2026_5,2026,Canadian Grand Prix,NOR,2.0,3.0,True,True,7.0,7.0,7.0,sprint,Finished,McLaren
+2026_5,2026,Canadian Grand Prix,ANT,3.0,2.0,True,True,6.0,6.0,6.0,sprint,Finished,Mercedes
+2026_5,2026,Canadian Grand Prix,PIA,4.0,4.0,True,True,5.0,5.0,5.0,sprint,Finished,McLaren
+2026_5,2026,Canadian Grand Prix,LEC,5.0,6.0,True,True,4.0,4.0,4.0,sprint,Finished,Ferrari
+2026_5,2026,Canadian Grand Prix,HAM,6.0,5.0,True,True,3.0,3.0,3.0,sprint,Finished,Ferrari
+2026_5,2026,Canadian Grand Prix,VER,7.0,7.0,True,True,2.0,2.0,2.0,sprint,Finished,Red Bull
+2026_5,2026,Canadian Grand Prix,LIN,8.0,9.0,True,True,1.0,1.0,1.0,sprint,Finished,RB F1 Team
+2026_5,2026,Canadian Grand Prix,COL,9.0,13.0,True,True,0.0,0.0,0.0,sprint,Finished,Alpine F1 Team
+2026_5,2026,Canadian Grand Prix,SAI,10.0,10.0,True,True,0.0,0.0,0.0,sprint,Finished,Williams
+2026_5,2026,Canadian Grand Prix,LAW,11.0,18.0,True,True,0.0,0.0,0.0,sprint,Finished,RB F1 Team
+2026_5,2026,Canadian Grand Prix,BOR,12.0,12.0,True,True,0.0,0.0,0.0,sprint,Finished,Audi
+2026_5,2026,Canadian Grand Prix,OCO,13.0,14.0,True,True,0.0,0.0,0.0,sprint,Finished,Haas F1 Team
+2026_5,2026,Canadian Grand Prix,PER,14.0,16.0,True,True,0.0,0.0,0.0,sprint,Finished,Cadillac F1 Team
+2026_5,2026,Canadian Grand Prix,HUL,15.0,11.0,True,True,0.0,0.0,0.0,sprint,Finished,Audi
+2026_5,2026,Canadian Grand Prix,STR,16.0,17.0,True,True,0.0,0.0,0.0,sprint,Lapped,Aston Martin
+2026_5,2026,Canadian Grand Prix,BOT,17.0,21.0,True,True,0.0,0.0,0.0,sprint,Lapped,Cadillac F1 Team
+2026_5,2026,Canadian Grand Prix,BEA,18.0,19.0,True,True,0.0,0.0,0.0,sprint,Lapped,Haas F1 Team
+2026_5,2026,Canadian Grand Prix,ALB,19.0,22.0,True,True,0.0,0.0,0.0,sprint,Lapped,Williams
+2026_5,2026,Canadian Grand Prix,GAS,20.0,20.0,True,True,0.0,0.0,0.0,sprint,Lapped,Alpine F1 Team
+2026_5,2026,Canadian Grand Prix,HAD,21.0,8.0,True,True,0.0,0.0,0.0,sprint,Lapped,Red Bull
+2026_5,2026,Canadian Grand Prix,ALO,22.0,15.0,False,False,0.0,0.0,0.0,sprint,Retired,Aston Martin
+2026_9,2026,British Grand Prix,ANT,1.0,2.0,True,True,8.0,8.0,8.0,sprint,Finished,Mercedes
+2026_9,2026,British Grand Prix,HAM,2.0,1.0,True,True,7.0,7.0,7.0,sprint,Finished,Ferrari
+2026_9,2026,British Grand Prix,NOR,3.0,6.0,True,True,6.0,6.0,6.0,sprint,Finished,McLaren
+2026_9,2026,British Grand Prix,RUS,4.0,5.0,True,True,5.0,5.0,5.0,sprint,Finished,Mercedes
+2026_9,2026,British Grand Prix,LEC,5.0,4.0,True,True,4.0,4.0,4.0,sprint,Finished,Ferrari
+2026_9,2026,British Grand Prix,VER,6.0,3.0,True,True,3.0,3.0,3.0,sprint,Finished,Red Bull
+2026_9,2026,British Grand Prix,PIA,7.0,7.0,True,True,2.0,2.0,2.0,sprint,Finished,McLaren
+2026_9,2026,British Grand Prix,LAW,8.0,9.0,True,True,1.0,1.0,1.0,sprint,Finished,RB F1 Team
+2026_9,2026,British Grand Prix,HAD,9.0,8.0,True,True,0.0,0.0,0.0,sprint,Finished,Red Bull
+2026_9,2026,British Grand Prix,LIN,10.0,10.0,True,True,0.0,0.0,0.0,sprint,Finished,RB F1 Team
+2026_9,2026,British Grand Prix,GAS,11.0,11.0,True,True,0.0,0.0,0.0,sprint,Finished,Alpine F1 Team
+2026_9,2026,British Grand Prix,COL,12.0,14.0,True,True,0.0,0.0,0.0,sprint,Finished,Alpine F1 Team
+2026_9,2026,British Grand Prix,BOR,13.0,12.0,True,True,0.0,0.0,0.0,sprint,Finished,Audi
+2026_9,2026,British Grand Prix,BEA,14.0,16.0,True,True,0.0,0.0,0.0,sprint,Finished,Haas F1 Team
+2026_9,2026,British Grand Prix,HUL,15.0,13.0,True,True,0.0,0.0,0.0,sprint,Finished,Audi
+2026_9,2026,British Grand Prix,OCO,16.0,17.0,True,True,0.0,0.0,0.0,sprint,Finished,Haas F1 Team
+2026_9,2026,British Grand Prix,SAI,17.0,15.0,True,True,0.0,0.0,0.0,sprint,Finished,Williams
+2026_9,2026,British Grand Prix,ALB,18.0,22.0,True,True,0.0,0.0,0.0,sprint,Finished,Williams
+2026_9,2026,British Grand Prix,BOT,19.0,19.0,True,True,0.0,0.0,0.0,sprint,Finished,Cadillac F1 Team
+2026_9,2026,British Grand Prix,ALO,20.0,20.0,True,True,0.0,0.0,0.0,sprint,Finished,Aston Martin
+2026_9,2026,British Grand Prix,STR,21.0,21.0,True,True,0.0,0.0,0.0,sprint,Lapped,Aston Martin
+2026_9,2026,British Grand Prix,PER,22.0,18.0,True,True,0.0,0.0,0.0,sprint,Lapped,Cadillac F1 Team
+2026_12,2026,Dutch Grand Prix,RUS,1.0,1.0,True,True,8.0,8.0,8.0,sprint,Finished,Mercedes
+2026_12,2026,Dutch Grand Prix,LEC,2.0,3.0,True,True,7.0,7.0,7.0,sprint,Finished,Ferrari
+2026_12,2026,Dutch Grand Prix,NOR,3.0,2.0,True,True,6.0,6.0,6.0,sprint,Finished,McLaren
+2026_12,2026,Dutch Grand Prix,ANT,4.0,5.0,True,True,5.0,5.0,5.0,sprint,Finished,Mercedes
+2026_12,2026,Dutch Grand Prix,PIA,5.0,4.0,True,True,4.0,4.0,4.0,sprint,Finished,McLaren
+2026_12,2026,Dutch Grand Prix,VER,6.0,6.0,True,True,3.0,3.0,3.0,sprint,Finished,Red Bull
+2026_12,2026,Dutch Grand Prix,HAM,7.0,7.0,True,True,2.0,2.0,2.0,sprint,Finished,Ferrari
+2026_12,2026,Dutch Grand Prix,GAS,8.0,8.0,True,True,1.0,1.0,1.0,sprint,Finished,Alpine F1 Team
+2026_12,2026,Dutch Grand Prix,BOR,9.0,9.0,True,True,0.0,0.0,0.0,sprint,Finished,Audi
+2026_12,2026,Dutch Grand Prix,LIN,10.0,10.0,True,True,0.0,0.0,0.0,sprint,Finished,RB F1 Team
+2026_12,2026,Dutch Grand Prix,LAW,11.0,11.0,True,True,0.0,0.0,0.0,sprint,Finished,Red Bull
+2026_12,2026,Dutch Grand Prix,COL,12.0,13.0,True,True,0.0,0.0,0.0,sprint,Finished,Alpine F1 Team
+2026_12,2026,Dutch Grand Prix,TSU,13.0,12.0,True,True,0.0,0.0,0.0,sprint,Finished,RB F1 Team
+2026_12,2026,Dutch Grand Prix,OCO,14.0,15.0,True,True,0.0,0.0,0.0,sprint,Finished,Haas F1 Team
+2026_12,2026,Dutch Grand Prix,BEA,15.0,17.0,True,True,0.0,0.0,0.0,sprint,Finished,Haas F1 Team
+2026_12,2026,Dutch Grand Prix,ALB,16.0,16.0,True,True,0.0,0.0,0.0,sprint,Finished,Williams
+2026_12,2026,Dutch Grand Prix,STR,17.0,18.0,True,True,0.0,0.0,0.0,sprint,Finished,Aston Martin
+2026_12,2026,Dutch Grand Prix,ALO,18.0,22.0,True,True,0.0,0.0,0.0,sprint,Finished,Aston Martin
+2026_12,2026,Dutch Grand Prix,BOT,19.0,19.0,True,True,0.0,0.0,0.0,sprint,Lapped,Cadillac F1 Team
+2026_12,2026,Dutch Grand Prix,SAI,20.0,21.0,True,True,0.0,0.0,0.0,sprint,Lapped,Williams
+2026_12,2026,Dutch Grand Prix,PER,21.0,20.0,True,True,0.0,0.0,0.0,sprint,Lapped,Cadillac F1 Team
+2026_12,2026,Dutch Grand Prix,HUL,22.0,14.0,True,True,0.0,0.0,0.0,sprint,Lapped,Audi
+2026_17,2026,Singapore Grand Prix,VER,1.0,1.0,True,True,8.0,8.0,8.0,sprint,Finished,Red Bull
+2026_17,2026,Singapore Grand Prix,HAM,2.0,6.0,True,True,7.0,7.0,7.0,sprint,Finished,Ferrari
+2026_17,2026,Singapore Grand Prix,LEC,3.0,3.0,True,True,6.0,6.0,6.0,sprint,Finished,Ferrari
+2026_17,2026,Singapore Grand Prix,ANT,4.0,7.0,True,True,5.0,5.0,5.0,sprint,Finished,Mercedes
+2026_17,2026,Singapore Grand Prix,LAW,5.0,8.0,True,True,4.0,4.0,4.0,sprint,Finished,RB F1 Team
+2026_17,2026,Singapore Grand Prix,BEA,6.0,13.0,True,True,3.0,3.0,3.0,sprint,Finished,Haas F1 Team
+2026_17,2026,Singapore Grand Prix,HUL,7.0,12.0,True,True,2.0,2.0,2.0,sprint,Finished,Audi
+2026_17,2026,Singapore Grand Prix,NOR,8.0,5.0,True,True,1.0,1.0,1.0,sprint,Finished,McLaren
+2026_17,2026,Singapore Grand Prix,GAS,9.0,10.0,True,True,0.0,0.0,0.0,sprint,Finished,Alpine F1 Team
+2026_17,2026,Singapore Grand Prix,OCO,10.0,16.0,True,True,0.0,0.0,0.0,sprint,Finished,Haas F1 Team
+2026_17,2026,Singapore Grand Prix,ALO,11.0,15.0,True,True,0.0,0.0,0.0,sprint,Finished,Aston Martin
+2026_17,2026,Singapore Grand Prix,SAI,12.0,22.0,True,True,0.0,0.0,0.0,sprint,Finished,Williams
+2026_17,2026,Singapore Grand Prix,LIN,13.0,17.0,True,True,0.0,0.0,0.0,sprint,Finished,RB F1 Team
+2026_17,2026,Singapore Grand Prix,PIA,14.0,4.0,True,False,0.0,0.0,0.0,sprint,Retired,McLaren
+2026_17,2026,Singapore Grand Prix,ALB,15.0,19.0,False,False,0.0,0.0,0.0,sprint,Retired,Williams
+2026_17,2026,Singapore Grand Prix,BOR,16.0,14.0,False,False,0.0,0.0,0.0,sprint,Retired,Audi
+2026_17,2026,Singapore Grand Prix,BOT,17.0,21.0,False,False,0.0,0.0,0.0,sprint,Retired,Cadillac F1 Team
+2026_17,2026,Singapore Grand Prix,HAD,18.0,9.0,False,False,0.0,0.0,0.0,sprint,Retired,Red Bull
+2026_17,2026,Singapore Grand Prix,COL,19.0,11.0,False,False,0.0,0.0,0.0,sprint,Retired,Alpine F1 Team
+2026_17,2026,Singapore Grand Prix,RUS,20.0,2.0,False,False,0.0,0.0,0.0,sprint,Retired,Mercedes
+2026_17,2026,Singapore Grand Prix,PER,21.0,20.0,False,False,0.0,0.0,0.0,sprint,Retired,Cadillac F1 Team
+2026_17,2026,Singapore Grand Prix,STR,22.0,18.0,False,False,0.0,0.0,0.0,sprint,Retired,Aston Martin

@@ -30,6 +30,11 @@ TEAM_LINEAGE = {
     "Alfa Romeo Racing": "Audi",
     "Alfa Romeo": "Audi",
     "Kick Sauber": "Audi",
+    # Names used by the results service when timing data is unavailable.
+    "Red Bull": "Red Bull Racing",
+    "RB F1 Team": "Racing Bulls",
+    "Alpine F1 Team": "Alpine",
+    "Cadillac F1 Team": "Cadillac",
 }
 MISSING_TEAM_LABELS = {"", "None", "nan", "NaN", "UNKNOWN", "<NA>"}
 FINISHED_PREFIXES = ("Finished", "Lapped", "+")

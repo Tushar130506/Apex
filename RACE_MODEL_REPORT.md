@@ -18,12 +18,12 @@ the earlier winner classifier and is kept only for history.
 | Future-circuit forecast copied last year's practice and qualifying pace into the target | Fixed | Unrun races use prior-race form only. |
 | Championship ties were split equally | Fixed | Countback: most wins, then seconds, and so on. |
 | Championship treated classifier scores as log-strengths, making future races nearly uniform | Fixed | Remaining races use calibrated strengths plus a form-drift term for long horizons. |
-| No sprint points in forecasts | Partly fixed | `--sprint-rounds` simulates future sprints. Completed sprint results are still not in the data. |
+| No sprint points in forecasts | Fixed | `--sprint-rounds` simulates future sprints; `--sprint-results` adds completed ones. |
 | Evaluation on 10 races | Fixed | 133 races (2021-2026), every one predicted from earlier races only, with bootstrap intervals. |
 
 Not fixable from this repository: fuel load is estimated, there is no archive
-of pre-race weather forecasts, no live timing feed, and no sprint results in
-the processed data.
+of pre-race weather forecasts, and no live timing feed. Sprint results are
+used for championship points only, not as model features.
 
 ## Model
 
@@ -123,36 +123,55 @@ sample, three of them with a dominant champion.
 
 ## Forecasts
 
-The processed data ends at round 19 (Mexico City). Official results for
-round 20 could not be downloaded from this environment, so both forecasts
-below are pre-weekend, form-only forecasts made from data through round 19.
+Updated 17 November 2026. The feature table ends at round 19 (Mexico City).
+Round 20 (São Paulo) is added from its official classification through
+`--extra-results`, so it feeds prior-race form but has no practice or
+qualifying pace. Lap timing now needs an F1TV account, so no laps were
+processed for it.
 
-| | 1st | 2nd | 3rd |
-|---|---|---|---|
-| Round 20, São Paulo | VER 35.8% | ANT 25.2% | LEC 10.7% |
-| Round 21, Las Vegas | VER 36.0% | ANT 25.3% | LEC 10.9% |
+Round 20 result: Norris won from Verstappen and Hadjar. The pre-weekend
+forecast made from data through round 19 was wrong: it gave Verstappen 35.8%,
+Antonelli 25.2% and Norris 5.6%.
 
-News reports say Norris won in São Paulo from Verstappen and Hadjar. That
-was not verified against an official classification here. If correct, the
-model's pick was wrong: it gave Norris 5.6%.
+Round 21, Las Vegas (pre-weekend, form only, data through round 20):
 
-Championship from the stored data (race points only, no sprints): Antonelli
-349, Verstappen 241 with four races assumed left, so the drivers' title is
-mathematically settled, and Mercedes lead Ferrari 565-443. The simulation
-returns 100% for both. Second place: Verstappen is in the final top three in
-98% of simulations, Hamilton 67%.
+| | 1st | 2nd | 3rd | 4th | 5th |
+|---|---|---|---|---|---|
+| Win probability | VER 30.1% | ANT 22.0% | NOR 12.2% | RUS 10.4% | LEC 10.0% |
 
-Files: `runs/forecast_2026_20/`, `runs/forecast_2026_21/`,
-`runs/season_forecast_2026/`.
+Championship after round 20, with the six 2026 sprints now counted (sprint
+results from `data/manual/sprint_results_2026.csv`), three races left and no
+sprints remaining:
+
+| Drivers | Points | | Constructors | Points |
+|---|---:|---|---|---:|
+| Antonelli | 390 | | Mercedes | 652 |
+| Verstappen | 279 | | Ferrari | 510 |
+| Russell | 262 | | Red Bull Racing | 415 |
+| Hamilton | 261 | | McLaren | 398 |
+| Leclerc | 249 | | Racing Bulls | 114 |
+| Norris | 246 | | Alpine | 69 |
+
+Both titles are mathematically settled (75 driver points and 129 constructor
+points remain), and the simulation returns 100% for Antonelli and Mercedes.
+Final top three: Verstappen 98%, Russell 50%, Hamilton 30%, Leclerc 13%,
+Norris 10%. Points are derived from classified positions, so check them
+against the official standings before quoting them.
+
+Files: `runs/forecast_2026_21/`, `runs/season_forecast_2026/`. The stored
+`runs/forecast_2026_20/` is the pre-race forecast for round 20.
 
 To refresh after a race, or after qualifying:
 
 ```bash
-python scripts/predict_race.py --race-id 2026_21 --track "Las Vegas Grand Prix" \
-    --extra-results data/manual/2026_20.csv \
-    --entries data/manual/2026_21_grid.csv
+python scripts/build_race_results.py 2026 --out data/processed/race_results_2026.parquet
+python scripts/export_extra_results.py --results data/processed/race_results_2026.parquet
+python scripts/predict_race.py --race-id 2026_22 --track "Qatar Grand Prix" \
+    --extra-results data/manual/2026_20.csv data/manual/2026_21.csv \
+    --entries data/manual/2026_22_grid.csv
 ```
 
-`--extra-results` takes official results of races missing from the feature
-table (`race_id, track, driver, team, grid_position, finish_position, status`).
+`export_extra_results.py` writes one CSV per race that has official results
+but is missing from the feature table
+(`race_id, track, driver, team, grid_position, finish_position, status`).
 `--entries` takes the starting grid and, optionally, qualifying best laps.
