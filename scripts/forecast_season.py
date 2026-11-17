@@ -30,6 +30,7 @@ def main() -> None:
     parser.add_argument("--season", type=int, required=True)
     parser.add_argument("--remaining", nargs="+", required=True, help='"YYYY_round=Event name" for each race still to run')
     parser.add_argument("--sprint-rounds", nargs="*", default=[], help="race ids among --remaining that hold a sprint")
+    parser.add_argument("--sprint-results", default=None, help="parquet or CSV of completed sprint results (scripts/build_race_results.py --event-type sprint)")
     parser.add_argument("--simulations", type=int, default=20000)
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--out", default=None)
@@ -41,11 +42,16 @@ def main() -> None:
     remaining = pd.DataFrame(
         [dict(zip(("race_id", "track"), item.split("=", 1))) for item in args.remaining]
     )
+    sprints = None
+    if args.sprint_results:
+        reader = pd.read_csv if args.sprint_results.endswith(".csv") else pd.read_parquet
+        sprints = reader(args.sprint_results)
     outlook = season_outlook(
         table,
         args.season,
         remaining,
         sprint_race_ids=args.sprint_rounds,
+        sprint_results=sprints,
         simulations=args.simulations,
         seed=args.seed,
     )

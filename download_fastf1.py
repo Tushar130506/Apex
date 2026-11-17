@@ -5,6 +5,9 @@ Examples:
     python download_fastf1.py --years 2018-2024 --sessions all
     python download_fastf1.py --years 2018-2024 --sessions all --telemetry
 
+Sessions that have not taken place yet are skipped, so the current season can
+be downloaded while it is still running.
+
 The manifest is updated after every session, so stopping this process and
 running it again resumes from the first session that is not verified.
 """
@@ -14,6 +17,7 @@ import argparse
 import csv
 import json
 import re
+import sys
 import time
 from pathlib import Path
 from typing import Any
@@ -23,7 +27,9 @@ import pandas as pd
 import fastf1
 from fastf1.exceptions import RateLimitExceededError
 
-from src.apex.ingestion.fastf1_loader import _enable_cache
+sys.path.insert(0, str(Path(__file__).resolve().parent / "src"))
+from apex.ingestion.fastf1_loader import _enable_cache  # noqa: E402
+from apex.ingestion.race_results import session_has_run  # noqa: E402
 
 
 DEFAULT_YEARS = list(range(2018, 2025))
@@ -52,7 +58,6 @@ def session_jobs(years: list[int], sessions: str) -> list[dict[str, Any]]:
                 print(f"RATE LIMIT reached while reading {year} ({error}); waiting {RATE_LIMIT_WAIT_SECONDS} seconds...")
                 time.sleep(RATE_LIMIT_WAIT_SECONDS)
         for _, event in schedule.iterrows():
-            names = ["R"]
             if sessions == "all":
                 names = [
                     str(event[column])
@@ -62,7 +67,11 @@ def session_jobs(years: list[int], sessions: str) -> list[dict[str, Any]]:
                     and str(event[column]).strip()
                 ]
                 names = list(dict.fromkeys(names))
+            else:
+                names = ["Race"]
             for name in names:
+                if not session_has_run(event, name):
+                    continue
                 jobs.append(
                     {
                         "year": year,
@@ -100,6 +109,7 @@ def download(
     telemetry: bool,
     manifest_path: Path,
     report_path: Path,
+    allow_failed: bool = False,
 ) -> None:
     _enable_cache(cache_dir)
     manifest = load_manifest(manifest_path)
@@ -139,7 +149,7 @@ def download(
     failed = sum(row.get("status") == "failed" for row in manifest.values())
     print(f"COMPLETE: {verified}/{len(jobs)} verified; {failed} failed.")
     print(f"Reports: {manifest_path} and {report_path}")
-    if failed:
+    if failed and not allow_failed:
         raise SystemExit(1)
 
 
@@ -151,6 +161,11 @@ def main() -> None:
     parser.add_argument("--cache-dir", default=".fastf1-cache")
     parser.add_argument("--manifest", type=Path, default=Path("fastf1_download_report.json"))
     parser.add_argument("--report", type=Path, default=Path("fastf1_download_report.csv"))
+    parser.add_argument(
+        "--allow-failed",
+        action="store_true",
+        help="Exit successfully even when some sessions have no data (they stay listed in the report).",
+    )
     args = parser.parse_args()
     download(
         args.years,
@@ -159,6 +174,7 @@ def main() -> None:
         args.telemetry,
         args.manifest,
         args.report,
+        args.allow_failed,
     )
 
 

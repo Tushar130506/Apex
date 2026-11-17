@@ -31,6 +31,7 @@ def main() -> None:
     parser.add_argument("--results", default="data/processed/race_results_2018_2025_team.parquet")
     parser.add_argument("--future-results", default=None)
     parser.add_argument("--season", type=int, required=True)
+    parser.add_argument("--first-season", type=int, default=2018, help="earliest season of laps to read")
     parser.add_argument("--half-races", type=int, default=None)
     parser.add_argument("--out", default="runs/winner_walk_forward")
     args = parser.parse_args()
@@ -40,7 +41,7 @@ def main() -> None:
         results = pd.concat([results, pd.read_parquet(args.future_results)], ignore_index=True)
     season_features = []
     safety_summaries = []
-    for year in range(2018, args.season + 1):
+    for year in range(args.first_season, args.season + 1):
         laps = load_processed_season(args.data, year)
         season_features.append(build_pre_race_features(laps))
         safety_summaries.append(build_race_safety_summary(laps))

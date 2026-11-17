@@ -204,6 +204,7 @@ def season_outlook(
     *,
     roster: pd.DataFrame | None = None,
     sprint_race_ids: list[str] | None = None,
+    sprint_results: pd.DataFrame | None = None,
     history: list[pd.DataFrame] | None = None,
     calibration_races: int = 40,
     simulations: int = 5000,
@@ -214,6 +215,12 @@ def season_outlook(
     ``table`` holds completed races only (anything later is ignored as an
     outcome because its results are blank). ``remaining`` lists ``race_id`` and
     optionally ``track`` for the rounds still to run.
+
+    ``sprint_results`` holds completed sprint classifications (``race_id``,
+    ``driver``, ``team``, ``finish_position``, ``classified``). Sprints of
+    ``season`` held at rounds that are already complete add their points to
+    the standings. A sprint at a round still listed in ``remaining`` is left
+    out; list that round in ``sprint_race_ids`` to simulate it instead.
     """
     if remaining.empty:
         raise ValueError("remaining must list at least one race")
@@ -252,6 +259,12 @@ def season_outlook(
     )
     if "event_type" in season_done:
         completed["event_type"] = season_done["event_type"].fillna("race").to_numpy()
+    if sprint_results is not None and not sprint_results.empty:
+        completed = pd.concat(
+            [completed.assign(event_type=completed.get("event_type", "race")),
+             completed_sprints(sprint_results, set(completed["race_id"]))],
+            ignore_index=True,
+        )
     championship = forecast_championship(
         completed,
         races,
@@ -262,6 +275,28 @@ def season_outlook(
     )
     return SeasonOutlook(
         races=races, championship=championship, temperature=temperature, form_drift_per_race=drift
+    )
+
+
+def completed_sprints(sprint_results: pd.DataFrame, completed_race_ids: set[str]) -> pd.DataFrame:
+    """Sprint rows, in the shape of completed results, for finished rounds only."""
+    required = {"race_id", "driver", "team", "finish_position", "classified"}
+    missing = required - set(sprint_results.columns)
+    if missing:
+        raise ValueError(f"sprint results missing columns: {sorted(missing)}")
+    if sprint_results.duplicated(["race_id", "driver"]).any():
+        raise ValueError("sprint results need one row per sprint and driver")
+    rows = sprint_results[sprint_results["race_id"].isin(completed_race_ids)]
+    return pd.DataFrame(
+        {
+            "race_id": rows["race_id"],
+            "driver": rows["driver"],
+            "team": canonical_team(rows["team"]),
+            "points": np.nan,
+            "finish_position": pd.to_numeric(rows["finish_position"], errors="coerce"),
+            "classified": rows["classified"].fillna(False).astype(bool),
+            "event_type": "sprint",
+        }
     )
 
 

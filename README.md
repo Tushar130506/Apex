@@ -62,35 +62,37 @@ python scripts/forecast_season.py --season 2026 \
 official results of races missing from the feature table
 (`race_id, track, driver, team, grid_position, finish_position, status`).
 
-### Rebuilding the feature table
+### Rebuilding the data
 
 This needs network access to the FastF1 data servers.
 
 ```bash
-# 1. Laps for every session, one file per season -> data/processed/laps_<year>.parquet
-python download_fastf1.py --years 2018-2026 --sessions all
-python materialize_fastf1.py
+python scripts/rebuild_data.py
 ```
+
+It runs five steps in order and stops at the first one that fails:
+
+| Step | Output |
+|---|---|
+| `download` | FastF1 sessions in `.fastf1-cache/` (resumable; sessions not yet held are skipped) |
+| `laps` | `data/processed/laps_<year>.parquet` |
+| `results` | `data/processed/race_results.parquet` |
+| `sprints` | `data/processed/sprint_results.parquet` |
+| `features` | `runs/walk_forward_championship/input_features.parquet` |
+
+Run it again after a race weekend to add the new round. `--from-step results`
+skips the download, `--dry-run` prints the commands, and `--first-year` and
+`--last-year` set the range (default 2018 to the current year).
+
+Sprint results are kept in their own file because a sprint shares its
+`race_id` with that weekend's Grand Prix. Pass the file to the season forecast
+to count completed sprint points:
 
 ```bash
-# 2. Official race results
-python scripts/build_race_results.py 2018 2019 2020 2021 2022 2023 2024 2025 \
-  --out data/processed/race_results_2018_2025_team.parquet
-python scripts/build_race_results.py 2026 --out data/processed/race_results_2026_team.parquet
+python scripts/forecast_season.py --season 2026 \
+  --remaining "2026_21=Las Vegas Grand Prix" "2026_22=Qatar Grand Prix" \
+  --sprint-results data/processed/sprint_results.parquet --sprint-rounds 2026_22
 ```
-
-```bash
-# 3. Race-level features -> <out>/input_features.parquet
-python scripts/walk_forward_winner.py --season 2026 --half-races 9 \
-  --results data/processed/race_results_2018_2025_team.parquet \
-  --future-results data/processed/race_results_2026_team.parquet \
-  --out runs/walk_forward_championship
-```
-
-`walk_forward_winner.py` reads one season of laps at a time and reduces it to
-race-level rows before loading the next, so the full history never has to fit
-in memory. `build_race_results.py` fails if any round cannot be loaded; pass
-`--allow-skips` only when a partial file is acceptable.
 
 ## Lap-pace model
 
@@ -154,6 +156,7 @@ The optional strategy API uses the pace model fitted by that run.
 | Module | Responsibility |
 |---|---|
 | `apex.ingestion.fastf1_loader` | FastF1 sessions to the lap contract in `apex.schemas.contracts` |
+| `apex.ingestion.race_results` | Race and sprint classifications; which rounds have been run |
 | `apex.features.form_features` | Race-relative weekend features and prior-race form |
 | `apex.features.winner_features` | Per-race rows from laps: practice and qualifying pace, results join |
 | `apex.models.plackett_luce` | Exploded-logit loss, linear and boosted models, temperature fit |
@@ -184,14 +187,15 @@ real car. Candidates proposed by the surrogate must be re-run in CFD.
 
 - **Winner accuracy:** the race model does not reliably beat the pole-sitter
   on the top pick (2025: worse, 2026: equal).
-- **Missing data:** no sprint results, no pre-race weather forecasts, and the
-  feature table ends at 2026 round 19. Championship points are race points
-  only.
+- **Missing data:** no pre-race weather forecasts, and the committed feature
+  table ends at 2026 round 19. Sprint points count only when a sprint results
+  file is passed to `forecast_season.py`; stored forecasts in `runs/` are race
+  points only. Sprint results are not used as model features.
 - **Fuel is estimated:** FastF1 has no fuel data, so fuel mass is a linear
   burn from an assumed start load, and the fuel sensitivity is an assumption.
 - **Points:** derived from classified finishing position on the 25-18-15-12-10-8-6-4-2-1
-  scale, with no fastest-lap bonus. Sprint rows must be materialized as
-  `event_type="sprint"` before they count.
+  scale (sprints 8-7-6-5-4-3-2-1), with no fastest-lap bonus. The 2021
+  sprints paid 3-2-1, so derived sprint points for 2021 are too high.
 - **Confounders in lap pace:** driver, team, circuit, weather and traffic;
   read `mae_by_track` and `mae_by_compound` in a run's `metrics.json`.
 - **Strategy and race simulation:** no traffic, no full strategy search, no
