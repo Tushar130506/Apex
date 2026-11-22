@@ -22,3 +22,12 @@ def test_contract_mapping_and_reasons():
     assert (df.source == "fastf1_real").all() and (df.season == 2023).all() and (df.fuel_provenance == "estimated").all()
     assert list(df.exclusion_reason.fillna("ok")) == ["ok", "ok", "no_time", "neutralised", "pit_lap", "pit_lap"]
     assert df.track_temp.eq(38.0).all() and df.fuel_kg.is_monotonic_decreasing
+    assert "humidity_pct" not in df  # extra weather columns appear only when the feed has them
+
+
+def test_full_weather_feed_is_kept():
+    w = pd.DataFrame({"Time": [pd.to_timedelta(0, unit="s")], "TrackTemp": [38.0], "AirTemp": [25.0],
+                      "Humidity": [61.0], "Pressure": [1012.0], "WindSpeed": [2.4],
+                      "WindDirection": [180], "Rainfall": [False]})
+    df = validate_laps(laps_to_contract(fake_laps(), w, "fastf1_2023_1_R", "Test GP", 50, 2023))
+    assert df.humidity_pct.eq(61.0).all() and df.wind_speed_ms.eq(2.4).all() and not df.rainfall.any()

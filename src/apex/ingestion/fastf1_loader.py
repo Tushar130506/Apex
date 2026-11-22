@@ -10,6 +10,11 @@ import numpy as np
 import pandas as pd
 
 START_FUEL_KG = 105.0  # assumption: ~110 kg limit, small allowance; used only as an estimate
+# Optional weather columns kept alongside track_temp/air_temp (FastF1 name -> lap column).
+EXTRA_WEATHER = {
+    "Humidity": "humidity_pct", "Pressure": "pressure_mbar", "WindSpeed": "wind_speed_ms",
+    "WindDirection": "wind_direction_deg", "Rainfall": "rainfall",
+}
 
 
 def _enable_cache(cache_dir: str) -> None:
@@ -62,6 +67,9 @@ def laps_to_contract(laps: pd.DataFrame, weather: pd.DataFrame | None, session_i
         w = weather.sort_values("Time")
         idx = np.searchsorted(w["Time"].values, df["LapStartTime"].values).clip(0, len(w) - 1)
         out["track_temp"] = w["TrackTemp"].values[idx]; out["air_temp"] = w["AirTemp"].values[idx]
+        for source, column in EXTRA_WEATHER.items():
+            if source in w:
+                out[column] = w[source].values[idx]
     return out.reset_index(drop=True)
 
 

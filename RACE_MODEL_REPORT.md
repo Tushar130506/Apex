@@ -121,6 +121,31 @@ champion was the favourite at 82% of checkpoints, with a mean probability of
 79% (69% with 19+ races left, 91% with six or fewer). Four seasons is a small
 sample, three of them with a dominant champion.
 
+## Temperature features (tested, not adopted)
+
+Four features were tested on 2021-2025 (114 races), with 2026 left untouched:
+the practice track temperature (`track_temp_z`), relative tyre degradation
+times heat (`degradation_x_heat`), and how each driver and each team has done
+against their usual form in hot or cold races before (`driver_heat_effect`,
+`team_heat_effect`, prior races only, shrunk towards zero).
+
+| | Current model | With temperature |
+|---|---:|---:|
+| Winner log loss | 1.149 | 1.149 |
+| Winner accuracy | 60.5% | 58.8% |
+
+Log-loss difference +0.0001, 95% interval
+-0.023 to +0.023. Tested one
+at a time, no feature moved log loss by more than 0.003 in either direction.
+They are therefore not in the model; 2026 was not scored with them.
+
+What this does and does not show: weekend temperature adds nothing that grid,
+qualifying pace and form do not already carry, at the level of who wins. It
+does not show that temperature is irrelevant to lap time or tyre wear; that
+needs lap data and belongs to the degradation work. The features stay in
+`apex.features.form_features.TEMPERATURE_COLUMNS` and the test reproduces
+with `python scripts/compare_features.py --set temperature`.
+
 ## Forecasts
 
 Updated 22 November 2026. The feature table ends at round 19 (Mexico City).

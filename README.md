@@ -68,6 +68,16 @@ Give `--sprint-rounds` with the remaining sprint rounds, or with none; left
 out, the check assumes every remaining round could hold a sprint, so it never
 declares a title settled too early.
 
+To test new features against the current model before adding them:
+
+```bash
+python scripts/compare_features.py --set temperature
+```
+
+It refits both models before every 2021-2025 race and reports the log-loss
+difference with a bootstrap interval. The temperature features gave no
+measurable gain, so they are not in the model.
+
 `predict_race.py` and `forecast_season.py` accept `--extra-results` for
 official results of races missing from the feature table
 (`race_id, track, driver, team, grid_position, finish_position, status`).

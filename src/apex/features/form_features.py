@@ -82,6 +82,20 @@ FORM_COLUMNS = [
     "team_quali_gap_fast_rank",
 ]
 ORDER_MODEL_COLUMNS = WEEKEND_COLUMNS + FORM_COLUMNS
+# Weekend temperature and how each driver and team has fared in similar heat
+# before (prior races only). Experimental: not part of ORDER_MODEL_COLUMNS
+# unless the walk-forward evaluation shows they help.
+TEMPERATURE_COLUMNS = [
+    "track_temp_z",
+    "degradation_x_heat",
+    "driver_heat_effect",
+    "team_heat_effect",
+]
+# Fixed scale for practice track temperature (degrees C), roughly the
+# 2018-2025 mean and spread; a scale, not a fitted parameter.
+TRACK_TEMP_CENTRE = 36.0
+TRACK_TEMP_SCALE = 8.5
+HEAT_SHRINKAGE = 1.0
 
 FAST_HALFLIFE = 3.0
 SLOW_HALFLIFE = 10.0
@@ -296,8 +310,51 @@ def build_order_features(table: pd.DataFrame) -> pd.DataFrame:
     frame["team_quali_gap_fast_rank"] = race["team_quali_gap_fast"].rank(method="dense")
     frame["grid_vs_team_form"] = frame["grid_filled"] - frame["driver_grid_fast"]
 
+    _add_temperature_features(frame, team_race)
+
     helper = [column for column in frame.columns if column.startswith("_")]
     return frame.drop(columns=helper)
+
+
+def _heat_slope(frame: pd.DataFrame, key: str, residual: str, temp: str) -> pd.Series:
+    """Prior-race regression slope of ``residual`` on temperature, shrunk to 0.
+
+    Positive means the entrant has done worse than its usual form when hot.
+    """
+    work = frame[[key, "_order", residual, temp]].copy()
+    work["_rz"] = work[residual] * work[temp]
+    work["_zz"] = (work[temp] ** 2).where(work[residual].notna())
+    cross = _prior_ewm(work, key, "_rz", 2 * SLOW_HALFLIFE)
+    spread = _prior_ewm(work, key, "_zz", 2 * SLOW_HALFLIFE)
+    return (cross / (spread + HEAT_SHRINKAGE)).fillna(0.0)
+
+
+def _add_temperature_features(frame: pd.DataFrame, team_race: pd.DataFrame) -> None:
+    """Add :data:`TEMPERATURE_COLUMNS` in place."""
+    if "practice_track_temp" in frame:
+        temp = pd.to_numeric(frame["practice_track_temp"], errors="coerce")
+    else:
+        temp = pd.Series(np.nan, index=frame.index)
+    frame["track_temp_z"] = (temp - TRACK_TEMP_CENTRE) / TRACK_TEMP_SCALE
+    frame["degradation_x_heat"] = frame["degradation_rel"] * frame["track_temp_z"]
+
+    frame["_temp_z"] = frame["track_temp_z"]
+    frame["_finish_resid"] = frame["_finish"] - frame["driver_finish_slow"]
+    frame["driver_heat_effect"] = (
+        _heat_slope(frame, "driver", "_finish_resid", "_temp_z") * frame["track_temp_z"]
+    )
+
+    race_temp = frame.groupby("race_id")["track_temp_z"].first()
+    teams = team_race[["race_id", "team_canonical", "_order", "_team_best_finish"]].copy()
+    teams["_temp_z"] = teams["race_id"].map(race_temp)
+    teams["_team_form"] = _prior_ewm(teams, "team_canonical", "_team_best_finish", SLOW_HALFLIFE)
+    teams["_team_resid"] = teams["_team_best_finish"] - teams["_team_form"]
+    teams["_team_slope"] = _heat_slope(teams, "team_canonical", "_team_resid", "_temp_z")
+    slope = frame.merge(
+        teams[["race_id", "team_canonical", "_team_slope"]],
+        on=["race_id", "team_canonical"], how="left", validate="many_to_one",
+    )["_team_slope"].to_numpy()
+    frame["team_heat_effect"] = slope * frame["track_temp_z"]
 
 
 def results_table(table: pd.DataFrame) -> pd.DataFrame:
