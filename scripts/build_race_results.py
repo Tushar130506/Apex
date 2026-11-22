@@ -6,7 +6,8 @@
       --out data/processed/sprint_results.parquet
 
 Rounds that have not been run yet are skipped, and so, with a warning, is the
-latest round when its classification is not published yet. Sprint results go to their own
+latest round when it ended in the last two days and its classification is not
+published yet. Sprint results go to their own
 file: they share the ``race_id`` of the Grand Prix held that weekend, so the
 two must not be mixed in one table.
 """
@@ -18,7 +19,9 @@ import sys
 import pandas as pd
 
 sys.path.insert(0, "src")
-from apex.ingestion.race_results import SESSION_NAMES, completed_rounds, result_rows
+from apex.ingestion.race_results import SESSION_NAMES, completed_rounds, result_rows, session_has_run
+
+RECENT = pd.Timedelta("48h")
 
 
 def main() -> None:
@@ -40,10 +43,13 @@ def main() -> None:
     rows = []
     failures = []
     newest = max(args.years)
+    two_days_ago = pd.Timestamp.now(tz="UTC").tz_localize(None) - RECENT
     for year in args.years:
         schedule = fastf1.get_event_schedule(year, include_testing=False)
         rounds = completed_rounds(schedule, args.event_type)
         for round_number, track in rounds:
+            event = schedule[schedule["RoundNumber"].eq(round_number)].iloc[0]
+            recent = not session_has_run(event, SESSION_NAMES[args.event_type], two_days_ago)
             try:
                 session = fastf1.get_session(year, round_number, SESSION_NAMES[args.event_type])
                 session.load(telemetry=False, weather=False, messages=False)
@@ -52,8 +58,8 @@ def main() -> None:
                     raise RuntimeError("session has no classification")
                 rows.extend(found)
             except Exception as error:  # noqa: BLE001 - collect every failed round
-                if year == newest and round_number == rounds[-1][0]:
-                    # The classification of the latest round can lag the race itself.
+                if year == newest and round_number == rounds[-1][0] and recent:
+                    # The classification of a round that ended in the last two days can lag the race.
                     print(f"WARNING: {year} round {round_number} skipped, its results are not available yet: {error}")
                     continue
                 print(f"skip {year} round {round_number}: {error}")

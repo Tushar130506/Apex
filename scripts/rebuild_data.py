@@ -114,8 +114,8 @@ def main() -> None:
             print(
                 f"WARNING: {len(missing)} race(s) have results but no lap data, so they are not in the "
                 f"feature table and their points are not counted: {', '.join(missing)}.\n"
-                f"Add them with: python scripts/export_extra_results.py --results {results.relative_to(ROOT)} "
-                f"--features {features.relative_to(ROOT)}, then pass the CSVs as --extra-results."
+                f"Add them with: python scripts/export_extra_results.py --results {Path(args.data) / 'race_results.parquet'} "
+                f"--features {Path(args.out) / 'input_features.parquet'}, then pass the CSVs as --extra-results."
             )
 
 

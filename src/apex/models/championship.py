@@ -29,6 +29,7 @@ class ChampionshipForecast:
     completed_races: int
     projected_races: int
     projected_sprints: int = 0
+    title_status_sprints: int = 0
 
 
 def title_status(current_points: pd.Series, max_gain: float) -> pd.DataFrame:
@@ -77,8 +78,11 @@ def describe_title_chances(
     label = str(row[key])
     leader = frame.sort_values("current_points", ascending=False).iloc[0]
     left = f"{forecast.projected_races} race(s)"
-    if forecast.projected_sprints:
-        left += f" and {forecast.projected_sprints} sprint(s)"
+    sprints = max(forecast.projected_sprints, forecast.title_status_sprints)
+    if sprints:
+        left += f" and {sprints} sprint(s)"
+        if sprints > forecast.projected_sprints:
+            left += f", {sprints - forecast.projected_sprints} of them assumed rather than simulated"
     points = f"{row.current_points:.0f} points"
     if row.title_status == "clinched":
         return f"{label} has won the title: {points}, and no rival can reach that with {left} left."
@@ -368,6 +372,7 @@ def forecast_championship(
         completed_races=int(completed["race_id"].nunique()),
         projected_races=projected_races,
         projected_sprints=projected_sprints,
+        title_status_sprints=bound_sprints,
     )
 
 

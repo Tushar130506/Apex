@@ -120,3 +120,11 @@ def test_unknown_remaining_sprints_keep_the_title_check_safe():
     assert known.driver.set_index("driver").loc["B", "title_status"] == "eliminated"
     assert assumed.driver.set_index("driver").loc["B", "title_status"] == "contender"
     assert assumed.driver.set_index("driver").loc["B", "max_possible_points"] == 48 + 50 + 16
+
+    sentence = describe_title_chances_for(assumed, "B")
+    assert "2 race(s) and 2 sprint(s), 2 of them assumed" in sentence and "at most 114" in sentence
+
+
+def describe_title_chances_for(forecast, name):
+    from apex.models.championship import describe_title_chances
+    return describe_title_chances(forecast, name)

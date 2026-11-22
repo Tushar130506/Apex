@@ -63,13 +63,13 @@ def main() -> None:
     data.drop(columns=[c for c in data.columns if c.startswith("_")]).to_parquet(
         output / "input_features.parquet", index=False
     )
-    try:
-        predictions, metrics = walk_forward_predictions(
-            data, season=args.season, half_races=args.half_races
-        )
-    except ValueError as error:
-        print(f"WARNING: {args.season} not scored ({error}); input_features.parquet was written")
+    season_races = data.loc[data["season"].eq(args.season), "race_id"].nunique()
+    if season_races < 2:
+        print(f"WARNING: {args.season} has {season_races} race(s), too few to score; input_features.parquet was written")
         return
+    predictions, metrics = walk_forward_predictions(
+        data, season=args.season, half_races=args.half_races
+    )
     predictions.to_parquet(output / f"{args.season}_predictions.parquet", index=False)
     (output / f"{args.season}_metrics.json").write_text(
         json.dumps(metrics, indent=2), encoding="utf-8"
