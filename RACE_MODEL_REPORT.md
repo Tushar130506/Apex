@@ -123,43 +123,47 @@ sample, three of them with a dominant champion.
 
 ## Forecasts
 
-Updated 17 November 2026. The feature table ends at round 19 (Mexico City).
-Round 20 (São Paulo) is added from its official classification through
-`--extra-results`, so it feeds prior-race form but has no practice or
-qualifying pace. Lap timing now needs an F1TV account, so no laps were
-processed for it.
+Updated 22 November 2026. The feature table ends at round 19 (Mexico City).
+Rounds 20 (São Paulo) and 21 (Las Vegas) are added from their official
+classifications through `--extra-results`, so they feed prior-race form but
+have no practice or qualifying pace. Lap timing now needs an F1TV account, so
+no laps were processed for them.
 
-Round 20 result: Norris won from Verstappen and Hadjar. The pre-weekend
-forecast made from data through round 19 was wrong: it gave Verstappen 35.8%,
-Antonelli 25.2% and Norris 5.6%.
+How the pre-weekend (form-only) forecasts did:
 
-Round 21, Las Vegas (pre-weekend, form only, data through round 20):
+| Round | Forecast top three | Result |
+|---|---|---|
+| 20, São Paulo | VER 35.8%, ANT 25.2%, LEC 10.7% (NOR 5.6%) | NOR, VER, HAD |
+| 21, Las Vegas | VER 30.1%, ANT 22.0%, NOR 12.2% | VER, NOR, PIA |
+
+Round 22, Qatar (pre-weekend, form only, data through round 21):
 
 | | 1st | 2nd | 3rd | 4th | 5th |
 |---|---|---|---|---|---|
-| Win probability | VER 30.1% | ANT 22.0% | NOR 12.2% | RUS 10.4% | LEC 10.0% |
+| Win probability | VER 46.3% | ANT 13.9% | NOR 12.5% | RUS 7.3% | LEC 6.2% |
 
-Championship after round 20, with the six 2026 sprints now counted (sprint
-results from `data/manual/sprint_results_2026.csv`), three races left and no
-sprints remaining:
+Championship after round 21, sprints included (the six 2026 sprints are in
+`data/manual/sprint_results_2026.csv`), two races left and no sprints
+remaining:
 
 | Drivers | Points | | Constructors | Points |
 |---|---:|---|---|---:|
-| Antonelli | 390 | | Mercedes | 652 |
-| Verstappen | 279 | | Ferrari | 510 |
-| Russell | 262 | | Red Bull Racing | 415 |
-| Hamilton | 261 | | McLaren | 398 |
-| Leclerc | 249 | | Racing Bulls | 114 |
-| Norris | 246 | | Alpine | 69 |
+| Antonelli | 402 | | Mercedes | 666 |
+| Verstappen | 304 | | Ferrari | 517 |
+| Hamilton | 267 | | Red Bull Racing | 440 |
+| Norris | 264 | | McLaren | 431 |
+| Russell | 264 | | Racing Bulls | 114 |
+| Leclerc | 250 | | Alpine | 87 |
 
-Both titles are mathematically settled (75 driver points and 129 constructor
-points remain), and the simulation returns 100% for Antonelli and Mercedes.
-Final top three: Verstappen 98%, Russell 50%, Hamilton 30%, Leclerc 13%,
-Norris 10%. Points are derived from classified positions, so check them
-against the official standings before quoting them.
+Both titles are settled (`title_status` clinched for Antonelli and Mercedes).
+Verstappen finishes second in every simulation; third place is open between
+Norris (35%), Russell (31%) and Hamilton (29%). Points are derived from
+classified positions, so check them against the official standings before
+quoting them.
 
-Files: `runs/forecast_2026_21/`, `runs/season_forecast_2026/`. The stored
-`runs/forecast_2026_20/` is the pre-race forecast for round 20.
+Files: `runs/forecast_2026_22/`, `runs/season_forecast_2026/`. The stored
+`runs/forecast_2026_20/` and `runs/forecast_2026_21/` are the pre-race
+forecasts for those rounds.
 
 To refresh after a race, or after qualifying:
 

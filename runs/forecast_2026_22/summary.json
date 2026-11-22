@@ -1,0 +1,10 @@
+{
+  "race_id": "2026_22",
+  "track": "Qatar Grand Prix",
+  "forecast_mode": "pre-weekend",
+  "trained_on_races": 194,
+  "trained_through_race": 202621,
+  "win_temperature": 0.868294116627253,
+  "predicted_winner": "VER",
+  "predicted_winner_probability": 0.46348689428509066
+}
