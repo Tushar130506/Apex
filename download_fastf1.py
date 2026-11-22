@@ -87,7 +87,15 @@ def load_manifest(path: Path) -> dict[str, dict[str, Any]]:
         return {}
     with path.open(encoding="utf-8") as file:
         data = json.load(file)
-    return {str(item["key"]): item for item in data}
+    manifest: dict[str, dict[str, Any]] = {}
+    for item in data:
+        if item.get("session") == "R":
+            # Older race-only runs used FastF1's 'R'; the same session is now 'Race'.
+            item = {**item, "session": "Race", "key": f"{item['year']}|{item['event']}|Race"}
+            if manifest.get(item["key"], {}).get("status") == "verified":
+                continue
+        manifest[str(item["key"])] = item
+    return manifest
 
 
 def save_reports(
@@ -113,6 +121,7 @@ def download(
 ) -> None:
     _enable_cache(cache_dir)
     manifest = load_manifest(manifest_path)
+    save_reports(manifest, manifest_path, report_path)  # stores any migrated 'R' keys
     jobs = session_jobs(years, sessions)
     print(f"Found {len(jobs)} sessions; verified {sum(x.get('status') == 'verified' for x in manifest.values())}.")
 

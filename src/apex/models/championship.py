@@ -211,6 +211,7 @@ def forecast_championship(
     temperature: float = 1.0,
     sprint_race_ids: list[str] | None = None,
     form_drift_per_race: float = 0.0,
+    sprints_for_title_status: int | None = None,
 ) -> ChampionshipForecast:
     """Forecast WDC/WCC from completed points and future race predictions.
 
@@ -224,6 +225,10 @@ def forecast_championship(
     walk added to log-strengths race after race. It widens long-horizon
     forecasts, because form measured today is a worse guide to a race ten
     rounds away than to the next one.
+    ``sprints_for_title_status`` is how many sprints the clinched/eliminated
+    check assumes are still to score; it defaults to the simulated sprints.
+    Pass a larger number when the remaining sprints are not known, so the
+    check stays a safe bound.
     """
     if simulations < 1:
         raise ValueError("simulations must be positive")
@@ -316,10 +321,11 @@ def forecast_championship(
                 np.add.at(team_counts, (rows, entrant_teams[orders], slots), 1.0)
 
     projected_races = int(future["race_id"].nunique())
-    driver_gain = projected_races * RACE_POINTS[0] + projected_sprints * SPRINT_POINTS[0]
+    bound_sprints = max(projected_sprints, sprints_for_title_status or 0)
+    driver_gain = projected_races * RACE_POINTS[0] + bound_sprints * SPRINT_POINTS[0]
     team_gain = (
         projected_races * (RACE_POINTS[0] + RACE_POINTS[1])
-        + projected_sprints * (SPRINT_POINTS[0] + SPRINT_POINTS[1])
+        + bound_sprints * (SPRINT_POINTS[0] + SPRINT_POINTS[1])
     )
     driver_ranks = countback_ranks(driver_points, driver_counts)
     team_ranks = countback_ranks(team_points, team_counts)

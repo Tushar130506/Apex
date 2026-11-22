@@ -7,6 +7,7 @@ import pandas as pd
 
 GRAND_PRIX_POINTS = (25, 18, 15, 12, 10, 8, 6, 4, 2, 1)
 SPRINT_POINTS = (8, 7, 6, 5, 4, 3, 2, 1)
+SPRINT_POINTS_2021 = (3, 2, 1)
 
 
 def _scale_points(points: tuple[int, ...], fraction: float | None) -> list[float]:
@@ -30,6 +31,7 @@ def points_for_position(
     classified: bool = True,
     disqualified: bool = False,
     distance_fraction: float | None = None,
+    season: int | None = None,
 ) -> float:
     """Return points from position and event conditions.
 
@@ -43,7 +45,7 @@ def points_for_position(
         return 0.0
     normalized = event_type.strip().lower()
     if normalized in {"sprint", "sprint race"}:
-        scale = SPRINT_POINTS
+        scale = SPRINT_POINTS_2021 if season == 2021 else SPRINT_POINTS
     elif normalized in {"race", "grand prix", "gp"}:
         scale = GRAND_PRIX_POINTS
     else:
@@ -63,6 +65,12 @@ def derive_points(results: pd.DataFrame) -> pd.DataFrame:
     event_type = output["event_type"] if "event_type" in output else pd.Series("race", index=output.index)
     distance = output["distance_fraction"] if "distance_fraction" in output else pd.Series(pd.NA, index=output.index)
     disqualified = output["disqualified"] if "disqualified" in output else pd.Series(False, index=output.index)
+    if "season" in output:
+        seasons = pd.to_numeric(output["season"], errors="coerce")
+    elif "race_id" in output:
+        seasons = pd.to_numeric(output["race_id"].astype(str).str.extract(r"^(\d{4})_")[0], errors="coerce")
+    else:
+        seasons = pd.Series(pd.NA, index=output.index)
     output["derived_points"] = [
         points_for_position(
             position,
@@ -70,9 +78,10 @@ def derive_points(results: pd.DataFrame) -> pd.DataFrame:
             classified=bool(classified),
             disqualified=bool(dq),
             distance_fraction=None if pd.isna(fraction) else float(fraction),
+            season=None if pd.isna(year) else int(year),
         )
-        for position, kind, classified, dq, fraction in zip(
-            output["finish_position"], event_type, output["classified"], disqualified, distance
+        for position, kind, classified, dq, fraction, year in zip(
+            output["finish_position"], event_type, output["classified"], disqualified, distance, seasons
         )
     ]
     return output

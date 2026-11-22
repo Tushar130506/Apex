@@ -126,3 +126,49 @@ def test_export_keeps_only_races_newer_than_the_feature_table():
     assert set(rows["race_id"]) == {"2026_20"}
     assert rows["team"].tolist() == ["McLaren", "Red Bull Racing", "Red Bull Racing", "Racing Bulls"]
     assert list(rows.columns) == module.COLUMNS
+
+
+def test_without_a_session_time_the_race_counts_from_the_next_day():
+    event = pd.Series({"RoundNumber": 23, "EventName": "Abu Dhabi Grand Prix",
+                       "EventDate": pd.Timestamp("2026-12-06"), "Session5": "Race",
+                       "Session5DateUtc": pd.NaT})
+    assert not session_has_run(event, "Race", pd.Timestamp("2026-12-06 08:00"))
+    assert session_has_run(event, "Race", pd.Timestamp("2026-12-07 00:00"))
+
+
+def test_2021_sprints_pay_three_two_one():
+    rows = pd.DataFrame(result_rows(_classification(), 2021, 10, "British Grand Prix", "sprint"))
+    assert rows["points"].tolist() == [3.0, 2.0, 1.0, 0.0]
+    from apex.models.points import derive_points
+    assert derive_points(rows)["derived_points"].tolist() == [3.0, 2.0, 1.0, 0.0]
+
+
+def test_export_includes_rounds_missing_from_the_middle():
+    spec = importlib.util.spec_from_file_location("export_extra", ROOT / "scripts" / "export_extra_results.py")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    results = pd.concat([
+        pd.DataFrame(result_rows(_classification(), 2026, number, "Somewhere")) for number in (14, 15, 16)
+    ])
+    rows = module.missing_races(results, pd.DataFrame({"race_id": ["2026_14", "2026_16"]}))
+    assert set(rows["race_id"]) == {"2026_15"}
+
+
+def test_rebuild_names_rounds_that_have_results_but_no_features(tmp_path):
+    rebuild = _rebuild()
+    pd.DataFrame({"race_id": ["2026_9", "2026_10", "2026_20"]}).to_parquet(tmp_path / "results.parquet")
+    pd.DataFrame({"race_id": ["2026_9"]}).to_parquet(tmp_path / "features.parquet")
+    assert rebuild.missing_rounds(tmp_path / "results.parquet", tmp_path / "features.parquet") == ["2026_10", "2026_20"]
+
+
+def test_old_race_only_manifest_keys_are_read_as_race(tmp_path):
+    pytest.importorskip("fastf1")
+    spec = importlib.util.spec_from_file_location("download_fastf1", ROOT / "download_fastf1.py")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    path = tmp_path / "manifest.json"
+    path.write_text('[{"key": "2025|Monaco Grand Prix|R", "year": 2025, "event": "Monaco Grand Prix", '
+                    '"session": "R", "status": "verified", "laps": 1500, "error": ""}]', encoding="utf-8")
+    manifest = module.load_manifest(path)
+    assert list(manifest) == ["2025|Monaco Grand Prix|Race"]
+    assert manifest["2025|Monaco Grand Prix|Race"]["session"] == "Race"

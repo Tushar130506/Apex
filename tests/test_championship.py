@@ -99,3 +99,24 @@ def test_simulation_agrees_with_title_status_and_sentences_say_so():
     assert "has won the title" in describe_title_chances(clinched, "A")
     with pytest.raises(ValueError):
         describe_title_chances(clinched, "ZZZ")
+
+
+def test_unknown_remaining_sprints_keep_the_title_check_safe():
+    completed = pd.DataFrame(
+        [
+            {"race_id": "2026_1", "driver": "A", "team": "X", "points": 100},
+            {"race_id": "2026_1", "driver": "B", "team": "Y", "points": 48},
+        ]
+    )
+    future = pd.DataFrame(
+        [
+            {"race_id": f"2026_{number}", "driver": driver, "team": team, "score": score}
+            for number in (2, 3)
+            for driver, team, score in (("A", "X", 0.9), ("B", "Y", 0.1))
+        ]
+    )
+    known = forecast_championship(completed, future, simulations=50, seed=0)
+    assumed = forecast_championship(completed, future, simulations=50, seed=0, sprints_for_title_status=2)
+    assert known.driver.set_index("driver").loc["B", "title_status"] == "eliminated"
+    assert assumed.driver.set_index("driver").loc["B", "title_status"] == "contender"
+    assert assumed.driver.set_index("driver").loc["B", "max_possible_points"] == 48 + 50 + 16

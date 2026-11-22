@@ -30,7 +30,11 @@ def main() -> None:
     parser.add_argument("--extra-results", nargs="*", default=[])
     parser.add_argument("--season", type=int, required=True)
     parser.add_argument("--remaining", nargs="+", required=True, help='"YYYY_round=Event name" for each race still to run')
-    parser.add_argument("--sprint-rounds", nargs="*", default=[], help="race ids among --remaining that hold a sprint")
+    parser.add_argument(
+        "--sprint-rounds", nargs="*", default=None,
+        help="race ids among --remaining that hold a sprint; give the flag with no ids when none do. "
+        "Left out, sprints are not simulated and the clinched/eliminated check assumes every remaining round could hold one.",
+    )
     parser.add_argument("--sprint-results", default=None, help="parquet or CSV of completed sprint results (scripts/build_race_results.py --event-type sprint)")
     parser.add_argument("--driver", nargs="*", default=[], help="driver codes to describe, e.g. VER NOR")
     parser.add_argument("--team", nargs="*", default=[], help="team names to describe, e.g. Ferrari")

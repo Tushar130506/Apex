@@ -56,7 +56,7 @@ python scripts/predict_race.py --race-id 2026_21 --track "Las Vegas Grand Prix"
 # Remaining races and both championships; --driver/--team print each one's title chances
 python scripts/forecast_season.py --season 2026 \
   --remaining "2026_21=Las Vegas Grand Prix" "2026_22=Qatar Grand Prix" \
-  --driver VER NOR --team Ferrari
+  --sprint-rounds --driver VER NOR --team Ferrari
 ```
 
 The championship tables give each driver and team a title probability from
@@ -64,6 +64,9 @@ the simulation and a `title_status` from points alone: `clinched`,
 `contender` (still mathematically possible) or `eliminated`, with
 `max_possible_points` if they won everything left. A contender the simulation
 never crowns is reported as below one in the number of simulations, not as 0%.
+Give `--sprint-rounds` with the remaining sprint rounds, or with none; left
+out, the check assumes every remaining round could hold a sprint, so it never
+declares a title settled too early.
 
 `predict_race.py` and `forecast_season.py` accept `--extra-results` for
 official results of races missing from the feature table

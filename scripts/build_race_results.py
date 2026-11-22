@@ -5,7 +5,8 @@
   python scripts/build_race_results.py 2024 2025 2026 --event-type sprint \
       --out data/processed/sprint_results.parquet
 
-Rounds that have not been run yet are skipped. Sprint results go to their own
+Rounds that have not been run yet are skipped, and so, with a warning, is the
+latest round when its classification is not published yet. Sprint results go to their own
 file: they share the ``race_id`` of the Grand Prix held that weekend, so the
 two must not be mixed in one table.
 """
@@ -38,9 +39,11 @@ def main() -> None:
     _enable_cache(args.cache_dir)
     rows = []
     failures = []
+    newest = max(args.years)
     for year in args.years:
         schedule = fastf1.get_event_schedule(year, include_testing=False)
-        for round_number, track in completed_rounds(schedule, args.event_type):
+        rounds = completed_rounds(schedule, args.event_type)
+        for round_number, track in rounds:
             try:
                 session = fastf1.get_session(year, round_number, SESSION_NAMES[args.event_type])
                 session.load(telemetry=False, weather=False, messages=False)
@@ -49,6 +52,10 @@ def main() -> None:
                     raise RuntimeError("session has no classification")
                 rows.extend(found)
             except Exception as error:  # noqa: BLE001 - collect every failed round
+                if year == newest and round_number == rounds[-1][0]:
+                    # The classification of the latest round can lag the race itself.
+                    print(f"WARNING: {year} round {round_number} skipped, its results are not available yet: {error}")
+                    continue
                 print(f"skip {year} round {round_number}: {error}")
                 failures.append((year, round_number, str(error)))
     if failures and not args.allow_skips:

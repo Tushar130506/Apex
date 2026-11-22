@@ -24,12 +24,12 @@ COLUMNS = ["race_id", "track", "driver", "team", "grid_position", "finish_positi
 
 
 def missing_races(results: pd.DataFrame, table: pd.DataFrame) -> pd.DataFrame:
-    """Rows of ``results`` for races later than everything in ``table``."""
+    """Rows of ``results`` for races that are absent from ``table``."""
     absent = set(COLUMNS) - set(results.columns)
     if absent:
         raise ValueError(f"results missing columns: {sorted(absent)}")
-    last = race_order(table["race_id"]).max()
-    rows = results[race_order(results["race_id"]).gt(last)].copy()
+    rows = results[~results["race_id"].isin(set(table["race_id"]))].copy()
+    rows = rows.iloc[race_order(rows["race_id"]).argsort(kind="stable")]
     rows["team"] = canonical_team(rows["team"])
     return rows[COLUMNS]
 
@@ -48,7 +48,7 @@ def main() -> None:
         group.to_csv(path, index=False)
         print(f"wrote {path} ({len(group)} drivers)")
     if rows.empty:
-        print("no races newer than the feature table")
+        print("every race with results is already in the feature table")
 
 
 if __name__ == "__main__":

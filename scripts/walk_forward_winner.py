@@ -42,7 +42,13 @@ def main() -> None:
     season_features = []
     safety_summaries = []
     for year in range(args.first_season, args.season + 1):
-        laps = load_processed_season(args.data, year)
+        try:
+            laps = load_processed_season(args.data, year)
+        except FileNotFoundError:
+            if year != args.season:
+                raise
+            print(f"WARNING: no laps for {year} yet; the feature table ends with {year - 1}")
+            continue
         season_features.append(build_pre_race_features(laps))
         safety_summaries.append(build_race_safety_summary(laps))
         del laps
@@ -52,17 +58,21 @@ def main() -> None:
     )
     del season_features
     data = attach_race_results(features, results)
-    predictions, metrics = walk_forward_predictions(
-        data, season=args.season, half_races=args.half_races
-    )
     output = Path(args.out)
     output.mkdir(parents=True, exist_ok=True)
+    data.drop(columns=[c for c in data.columns if c.startswith("_")]).to_parquet(
+        output / "input_features.parquet", index=False
+    )
+    try:
+        predictions, metrics = walk_forward_predictions(
+            data, season=args.season, half_races=args.half_races
+        )
+    except ValueError as error:
+        print(f"WARNING: {args.season} not scored ({error}); input_features.parquet was written")
+        return
     predictions.to_parquet(output / f"{args.season}_predictions.parquet", index=False)
     (output / f"{args.season}_metrics.json").write_text(
         json.dumps(metrics, indent=2), encoding="utf-8"
-    )
-    data.drop(columns=[c for c in data.columns if c.startswith("_")]).to_parquet(
-        output / "input_features.parquet", index=False
     )
     print(json.dumps({"season": args.season, "races": len(metrics), "metrics": metrics}, indent=2))
 

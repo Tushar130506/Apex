@@ -221,6 +221,12 @@ def season_outlook(
     ``season`` held at rounds that are already complete add their points to
     the standings. A sprint at a round still listed in ``remaining`` is left
     out; list that round in ``sprint_race_ids`` to simulate it instead.
+
+    ``sprint_race_ids=None`` means the remaining sprints are unknown: none is
+    simulated, but the clinched/eliminated check assumes every remaining round
+    could hold one. Pass ``[]`` when no sprints remain. A held sprint at a
+    remaining round also counts towards that check, because its points are
+    not in the standings.
     """
     if remaining.empty:
         raise ValueError("remaining must list at least one race")
@@ -265,6 +271,12 @@ def season_outlook(
              completed_sprints(sprint_results, set(completed["race_id"]))],
             ignore_index=True,
         )
+    remaining_ids = set(remaining["race_id"])
+    if sprint_race_ids is None:
+        bound_sprints = len(remaining_ids)
+    else:
+        held = set() if sprint_results is None else set(sprint_results["race_id"]) & remaining_ids
+        bound_sprints = len(set(sprint_race_ids) | held)
     championship = forecast_championship(
         completed,
         races,
@@ -272,6 +284,7 @@ def season_outlook(
         seed=seed,
         sprint_race_ids=sprint_race_ids,
         form_drift_per_race=drift,
+        sprints_for_title_status=bound_sprints,
     )
     return SeasonOutlook(
         races=races, championship=championship, temperature=temperature, form_drift_per_race=drift

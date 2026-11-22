@@ -18,16 +18,19 @@ def session_has_run(event: pd.Series, session_name: str, now: pd.Timestamp | Non
 
     The schedule lists the whole season, so sessions in the future must be
     skipped instead of being reported as download failures. A session counts
-    as over six hours after its scheduled start.
+    as over six hours after its scheduled start, or, when the schedule has
+    no time for it, from the day after the event date.
     """
     now = pd.Timestamp.now(tz="UTC").tz_localize(None) if now is None else pd.Timestamp(now)
     for column in event.index:
         if not re.fullmatch(r"Session\d+", str(column)) or str(event[column]).strip() != session_name:
             continue
         start = pd.to_datetime(event.get(f"{column}DateUtc"), errors="coerce")
-        if pd.isna(start):
-            start = pd.to_datetime(event.get("EventDate"), errors="coerce")
-        return bool(pd.notna(start) and start + pd.Timedelta(hours=6) <= now)
+        if pd.notna(start):
+            return bool(start + pd.Timedelta(hours=6) <= now)
+        # No session time: the event date is the race day, so wait a full day.
+        event_date = pd.to_datetime(event.get("EventDate"), errors="coerce")
+        return bool(pd.notna(event_date) and event_date.normalize() + pd.Timedelta(days=1) <= now)
     return False
 
 
@@ -50,10 +53,8 @@ def result_rows(
 ) -> list[dict]:
     """One row per driver from a FastF1 ``session.results`` table.
 
-    Points are derived from the classified position on the current scale
-    (sprints: 8-7-6-5-4-3-2-1). The 2021 sprints paid 3-2-1, so derived sprint
-    points for that season are too high; ``source_points`` keeps what the
-    timing source reported.
+    Points are derived from the classified position (sprints: 8-7-6-5-4-3-2-1,
+    or 3-2-1 in 2021); ``source_points`` keeps what the timing source reported.
     """
     rows = []
     for _, row in results.iterrows():
@@ -64,7 +65,8 @@ def result_rows(
         running = status.startswith(("Finished", "Lapped", "+"))
         classified = running or pd.notna(classified_position)
         points = points_for_position(
-            position, event_type=event_type, classified=classified, disqualified=disqualified
+            position, event_type=event_type, classified=classified, disqualified=disqualified,
+            season=year,
         )
         rows.append({
             "race_id": f"{year}_{round_number}",

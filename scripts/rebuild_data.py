@@ -64,6 +64,15 @@ def build_commands(args: argparse.Namespace) -> list[tuple[str, list[str]]]:
     return [(name, command) for name, command in commands if STEPS.index(name) >= start]
 
 
+def missing_rounds(results_path: Path, features_path: Path) -> list[str]:
+    """Race ids that have official results but no row in the feature table."""
+    import pandas as pd
+
+    results = set(pd.read_parquet(results_path, columns=["race_id"])["race_id"])
+    features = set(pd.read_parquet(features_path, columns=["race_id"])["race_id"])
+    return sorted(results - features, key=lambda race_id: [int(part) for part in race_id.split("_")])
+
+
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--first-year", type=int, default=2018)
@@ -94,8 +103,20 @@ def main() -> None:
                 f"step '{name}' failed (exit code {done.returncode}). "
                 f"Fix the cause and continue with: python scripts/rebuild_data.py --from-step {name}"
             )
-    if not args.dry_run:
-        print(f"\nDone. Feature table: {args.out}/input_features.parquet")
+    if args.dry_run:
+        return
+    print(f"\nDone. Feature table: {args.out}/input_features.parquet")
+    results = ROOT / args.data / "race_results.parquet"
+    features = ROOT / args.out / "input_features.parquet"
+    if results.exists() and features.exists():
+        missing = missing_rounds(results, features)
+        if missing:
+            print(
+                f"WARNING: {len(missing)} race(s) have results but no lap data, so they are not in the "
+                f"feature table and their points are not counted: {', '.join(missing)}.\n"
+                f"Add them with: python scripts/export_extra_results.py --results {results.relative_to(ROOT)} "
+                f"--features {features.relative_to(ROOT)}, then pass the CSVs as --extra-results."
+            )
 
 
 if __name__ == "__main__":
