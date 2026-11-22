@@ -210,12 +210,44 @@ The optional strategy API uses the pace model fitted by that run.
 
 ## Aero
 
-`apex.aero.doe.run_sheet` writes the list of CFD cases to run. After solving,
-fill in the coefficients and convergence columns; `validate_cfd` accepts only
-rows marked `openfoam` (the default), `ansys_fluent` or `star_ccm`, one solver
-per table. The lap-time estimate uses a generic car on a made-up circuit, so
-it compares designs under the same assumptions and is not a prediction for a
-real car. Candidates proposed by the surrogate must be re-run in CFD.
+The CFD pipeline runs OpenFOAM (openfoam.com releases) over the car's
+attitude: pitch (`aoa_deg`), ride height and yaw.
+
+```bash
+python scripts/cfd_study.py write --base cases/base --out cases/study \
+  --geometry car.obj --patches carGroup --aref 1.2 --lref 3.6 --origin 1.8 0 0 \
+  --designs 20 --velocity 50 --end-time 1500
+```
+
+Designs span pitch -1 to 2 degrees, ride height 0 to 40 mm above the base
+geometry, and yaw 0 to 4 degrees (`CAR_ATTITUDE_BOUNDS`). Each design becomes
+a copy of a base case you have already run by hand, with
+the geometry rotated and raised before meshing, the inlet set to the study's
+speed, and a force-coefficient output with downforce counted as positive. Run
+every `cases/study/<id>/Allrun.apex`, then:
+
+```bash
+python scripts/cfd_study.py collect --cases cases/study --out cases/study/results.csv
+```
+
+`collect` averages Cd and Cl over the last iterations, marks a case converged
+only when both are steady, and checks the table with `validate_cfd`, which
+accepts rows marked `openfoam` (the default), `ansys_fluent` or `star_ccm`,
+one solver per table. The geometry must face upstream (flow along +x, z up)
+and the base `Allrun` must not copy the geometry in, or it would undo the
+attitude.
+
+Tested here: case generation, the geometry transform (checked against the
+expected rotation on the motorBike surface), meshing and the solver on
+OpenFOAM v1912, and reading residuals and cell counts from its logs. The force
+output itself could not be produced with the Ubuntu v1912 package, whose
+function objects all fail at start-up; use a current openfoam.com release
+(for example v2412 under WSL), and check the first case's
+`postProcessing/apexForceCoeffs` before running the rest.
+
+The lap-time estimate uses a generic car on a made-up circuit, so it compares
+designs under the same assumptions and is not a prediction for a real car.
+Candidates proposed by the surrogate must be re-run in CFD.
 
 ## Limits
 
