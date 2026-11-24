@@ -7,6 +7,8 @@ sector times or telemetry.
 from __future__ import annotations
 
 import json
+import os
+from pathlib import Path
 import time
 import urllib.error
 import urllib.parse
@@ -19,6 +21,12 @@ from apex.features.form_features import canonical_team
 BASE_URL = "https://api.jolpi.ca/ergast/f1"
 PAGE = 100
 USER_AGENT = "apex-f1-research"
+# Pages of finished races never change, so they are kept on disk. Set
+# APEX_JOLPICA_CACHE="" to switch the cache off.
+CACHE_DIR = os.environ.get("APEX_JOLPICA_CACHE", "data/raw/jolpica")
+# The service allows about 500 requests an hour; stay under it.
+MIN_INTERVAL_S = float(os.environ.get("APEX_JOLPICA_INTERVAL", "7.5"))
+_last_request = 0.0
 
 
 def lap_seconds(value: object) -> float:
@@ -35,8 +43,25 @@ def lap_seconds(value: object) -> float:
         return float("nan")
 
 
+def _cache_file(path: str, offset: int, limit: int) -> Path | None:
+    if not CACHE_DIR:
+        return None
+    return Path(CACHE_DIR) / f"{path.replace('/', '_')}__{offset}_{limit}.json"
+
+
 def fetch(path: str, *, offset: int = 0, limit: int = PAGE, retries: int = 4) -> dict:
-    """One page of ``/ergast/f1/<path>.json``, retrying when rate-limited."""
+    """One page of ``/ergast/f1/<path>.json``, retrying when rate-limited.
+
+    Pages that hold data are cached on disk; empty pages (a session not yet
+    published) are not, so they are fetched again next time.
+    """
+    global _last_request
+    cached = _cache_file(path, offset, limit)
+    if cached is not None and cached.exists():
+        return json.loads(cached.read_text(encoding="utf-8"))
+    wait = MIN_INTERVAL_S - (time.monotonic() - _last_request)
+    if wait > 0:
+        time.sleep(wait)
     query = urllib.parse.urlencode({"limit": limit, "offset": offset})
     request = urllib.request.Request(
         f"{BASE_URL}/{path}.json?{query}", headers={"User-Agent": USER_AGENT}
@@ -44,14 +69,20 @@ def fetch(path: str, *, offset: int = 0, limit: int = PAGE, retries: int = 4) ->
     for attempt in range(retries + 1):
         try:
             with urllib.request.urlopen(request, timeout=30) as response:
-                return json.load(response)["MRData"]
+                data = json.load(response)["MRData"]
+            _last_request = time.monotonic()
+            if cached is not None and int(data.get("total", 0)) > 0:
+                cached.parent.mkdir(parents=True, exist_ok=True)
+                cached.write_text(json.dumps(data), encoding="utf-8")
+            return data
         except urllib.error.HTTPError as error:
             if error.code not in (429, 500, 502, 503) or attempt == retries:
                 raise
         except urllib.error.URLError:
             if attempt == retries:
                 raise
-        time.sleep(2.0 * 2**attempt)
+        _last_request = time.monotonic()
+        time.sleep(10.0 * 2**attempt)
     raise RuntimeError("unreachable")
 
 

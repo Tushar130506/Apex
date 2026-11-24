@@ -39,3 +39,15 @@ def test_fallback_on_stale_or_ood():
     assert r["action"] == "INSUFFICIENT_CONFIDENCE" and "incomplete" in r["reasons"][0]
     r = recommend(ST, PACE, ood_reasons=["tyre_age=70 outside training range"])
     assert r["action"] == "INSUFFICIENT_CONFIDENCE"
+
+
+def test_pace_model_from_measured_race_pace(tmp_path):
+    pace = ParametricPace.from_race_pace(-0.064, 0.11, 0.002, burn_kg_per_lap=1.6)
+    assert pace.deg["MEDIUM"] == pytest.approx(0.11) and pace.deg["SOFT"] > pace.deg["MEDIUM"] > pace.deg["HARD"]
+    assert pace.fuel_s_per_kg == pytest.approx(0.04) and pace.deg_quad["MEDIUM"] == pytest.approx(0.002)
+    path = tmp_path / "circuits.csv"
+    path.write_text("circuit,races,progress_s_per_lap,deg_s_per_lap,deg_quad_s_per_lap2\nlosail,2,-0.05,0.08,0.001\n")
+    loaded = ParametricPace.for_circuit(str(path), "losail")
+    assert loaded.deg["MEDIUM"] == pytest.approx(0.08) and loaded.fit_provenance == "race_pace:losail:2races"
+    with pytest.raises(KeyError):
+        ParametricPace.for_circuit(str(path), "monaco")

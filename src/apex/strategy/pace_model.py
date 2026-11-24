@@ -49,6 +49,50 @@ class ParametricPace:
                    deg_quad={c: 0.0 for c in DRY},
                    burn_kg_per_lap=burn_kg_per_lap, fit_provenance=f"fit:{d['source'].iloc[0]}:{d['session_id'].nunique()}sessions")
 
+    @classmethod
+    def from_race_pace(
+        cls,
+        progress_s_per_lap: float,
+        deg_s_per_lap: float,
+        deg_quad_s_per_lap2: float = 0.0,
+        burn_kg_per_lap: float = 1.6,
+        provenance: str = "race_pace",
+    ) -> "ParametricPace":
+        """Pace model scaled to one circuit's measured race pace.
+
+        The measurements (``apex.features.race_pace``) average over compounds,
+        so they set the MEDIUM tyre and the other compounds keep their default
+        ratios to it. The progress term mixes fuel burn with the track gaining
+        grip; it is expressed as a fuel sensitivity because both scale with
+        laps run, which is all the simulator needs.
+        """
+        if burn_kg_per_lap <= 0:
+            raise ValueError("burn_kg_per_lap must be positive")
+        base = cls()
+        scale = max(deg_s_per_lap, 0.0) / base.deg["MEDIUM"]
+        quad_scale = max(deg_quad_s_per_lap2, 0.0) / base.deg_quad["MEDIUM"]
+        return cls(
+            offset=dict(base.offset),
+            deg={compound: value * scale for compound, value in base.deg.items()},
+            deg_quad={compound: value * quad_scale for compound, value in base.deg_quad.items()},
+            fuel_s_per_kg=max(-progress_s_per_lap, 0.0) / burn_kg_per_lap,
+            burn_kg_per_lap=burn_kg_per_lap,
+            fit_provenance=provenance,
+        )
+
+    @classmethod
+    def for_circuit(cls, circuits_csv: str, circuit: str, burn_kg_per_lap: float = 1.6) -> "ParametricPace":
+        """Pace model from ``runs/race_pace/circuits.csv`` (median of measured races)."""
+        table = pd.read_csv(circuits_csv).set_index("circuit")
+        if circuit not in table.index:
+            raise KeyError(f"{circuit} not measured; known: {sorted(table.index)[:10]}...")
+        row = table.loc[circuit]
+        return cls.from_race_pace(
+            float(row["progress_s_per_lap"]), float(row["deg_s_per_lap"]),
+            float(row.get("deg_quad_s_per_lap2", 0.0)), burn_kg_per_lap,
+            provenance=f"race_pace:{circuit}:{int(row['races'])}races",
+        )
+
     def estimate_base(self, recent: pd.DataFrame) -> float:
         """Session base pace from recent clean laps (compound/age/fuel terms removed)."""
         r = recent[recent["valid"] & ~recent["is_pit_lap"]]
