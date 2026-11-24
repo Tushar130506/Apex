@@ -150,6 +150,8 @@ def fit_race_pace(cleaned: pd.DataFrame, *, bootstrap: int = 200, seed: int = 0)
 
 
 TYPICAL_TYRE_AGE = 12   # laps; team pace is compared at this tyre age
+MIN_DRIVER_LAPS = 10    # clean laps a driver needs to count toward team pace
+MIN_AGE_SPAN = 10       # laps of tyre-age range a team needs for its wear slope
 
 
 def team_race_pace(cleaned: pd.DataFrame) -> pd.DataFrame:
@@ -160,8 +162,14 @@ def team_race_pace(cleaned: pd.DataFrame) -> pd.DataFrame:
     at a 12-lap-old tyre against the field median, in percent of a lap
     (positive = slower). ``deg_rel_s_per_lap`` is the team's slope minus the
     median team's (positive = wears its tyres faster). Needs a ``team`` column.
+    Drivers with fewer than 10 clean laps are left out, and so are teams
+    left without a driver or with less than 10 laps of tyre-age range.
     """
-    clean = cleaned[cleaned["valid"]]
+    clean = cleaned[cleaned["valid"] & cleaned["team"].notna()]
+    laps_per_driver = clean.groupby("driver")["lap_no"].transform("size")
+    clean = clean[laps_per_driver >= MIN_DRIVER_LAPS]
+    span = clean.groupby("team")["tyre_age"].transform(lambda age: age.max() - age.min())
+    clean = clean[span >= MIN_AGE_SPAN]
     drivers = sorted(clean["driver"].unique())
     teams = sorted(clean["team"].dropna().unique())
     if len(clean) < MIN_CLEAN_LAPS or len(drivers) < MIN_DRIVERS:

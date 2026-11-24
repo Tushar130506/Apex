@@ -1,0 +1,706 @@
+race_id,team,pace_gap_pct,deg_rel_s_per_lap,clean_laps,mixed_conditions
+2024_1,Alpine,0.6472,0.0102,100,False
+2024_1,Aston Martin,-0.1051,-0.0095,104,False
+2024_1,Audi,0.3730,-0.0003,102,False
+2024_1,Ferrari,-0.8258,-0.0109,104,False
+2024_1,Haas F1 Team,0.1051,0.0047,101,False
+2024_1,McLaren,-0.5255,0.0017,104,False
+2024_1,Mercedes,-0.5820,-0.0158,104,False
+2024_1,Racing Bulls,0.4205,0.0214,102,False
+2024_1,Red Bull Racing,-1.2172,0.0001,104,False
+2024_1,Williams,0.5281,-0.0001,99,False
+2024_2,Alpine,1.0284,-0.0008,45,False
+2024_2,Aston Martin,-0.5568,0.0039,46,False
+2024_2,Audi,0.7791,0.0124,86,False
+2024_2,Ferrari,-0.5764,-0.0049,92,False
+2024_2,Haas F1 Team,0.4879,-0.0129,90,False
+2024_2,McLaren,-0.7160,0.0111,90,False
+2024_2,Mercedes,-0.4879,-0.0005,90,False
+2024_2,Racing Bulls,0.9967,0.0005,89,False
+2024_2,Red Bull Racing,-1.6325,0.0354,92,False
+2024_2,Williams,0.9632,-0.0112,90,False
+2024_3,Alpine,0.4957,0.0212,99,False
+2024_3,Aston Martin,-0.0846,0.0061,101,False
+2024_3,Audi,0.1998,-0.0143,98,False
+2024_3,Ferrari,-1.2385,-0.0043,99,False
+2024_3,Haas F1 Team,0.3563,0.0163,101,False
+2024_3,McLaren,-1.0640,-0.0065,98,False
+2024_3,Mercedes,-0.3656,-0.0079,61,False
+2024_3,Racing Bulls,0.0846,0.0043,100,False
+2024_3,Red Bull Racing,-0.5949,0.0274,50,False
+2024_3,Williams,0.3398,-0.0132,50,False
+2024_4,Alpine,1.1492,-0.0095,90,False
+2024_4,Aston Martin,-0.1345,0.0133,89,False
+2024_4,Audi,0.2079,0.0107,45,False
+2024_4,Ferrari,-1.1356,-0.0362,94,False
+2024_4,Haas F1 Team,0.2669,-0.0012,92,False
+2024_4,McLaren,-0.9202,0.0012,92,False
+2024_4,Mercedes,-0.5175,0.0515,92,False
+2024_4,Racing Bulls,0.1345,-0.0312,45,False
+2024_4,Red Bull Racing,-1.3311,0.0247,92,False
+2024_4,Williams,0.3577,-0.0174,43,False
+2024_5,Alpine,0.0963,-0.0004,82,False
+2024_5,Aston Martin,-0.0963,0.0532,80,False
+2024_5,Audi,0.5001,0.0597,56,False
+2024_5,Ferrari,-1.1591,-0.0437,86,False
+2024_5,Haas F1 Team,0.2052,0.0004,84,False
+2024_5,McLaren,-1.0693,0.0036,86,False
+2024_5,Mercedes,-0.4771,-0.0245,84,False
+2024_5,Racing Bulls,0.4849,0.0531,35,False
+2024_5,Red Bull Racing,-1.9251,-0.0033,84,False
+2024_5,Williams,0.4511,-0.0079,84,False
+2024_6,Alpine,-0.0650,0.0004,96,False
+2024_6,Aston Martin,0.0650,-0.0070,96,False
+2024_6,Audi,0.3000,0.0097,96,False
+2024_6,Ferrari,-1.0822,-0.0007,97,False
+2024_6,Haas F1 Team,0.0853,0.0217,96,False
+2024_6,McLaren,-1.1148,0.0027,97,False
+2024_6,Mercedes,-0.4181,-0.0046,96,False
+2024_6,Racing Bulls,0.1199,-0.0174,99,False
+2024_6,Red Bull Racing,-1.0126,0.0046,97,False
+2024_6,Williams,0.0759,-0.0004,67,False
+2024_7,Alpine,0.4096,0.0267,116,False
+2024_7,Aston Martin,-0.0317,0.0105,115,False
+2024_7,Audi,0.2152,0.0208,118,False
+2024_7,Ferrari,-1.3004,-0.0006,120,False
+2024_7,Haas F1 Team,0.2180,-0.0003,118,False
+2024_7,McLaren,-1.3750,-0.0146,120,False
+2024_7,Mercedes,-1.0196,-0.0041,117,False
+2024_7,Racing Bulls,0.0317,-0.0079,118,False
+2024_7,Red Bull Racing,-1.1673,0.0003,119,False
+2024_7,Williams,0.3490,0.0074,101,False
+2024_8,Alpine,0.2253,0.0017,73,True
+2024_8,Aston Martin,0.5877,0.0002,142,True
+2024_8,Audi,0.7024,0.0122,141,True
+2024_8,Ferrari,-1.5567,-0.0067,149,True
+2024_8,McLaren,-1.5804,-0.0050,149,True
+2024_8,Mercedes,-1.0300,-0.0236,142,True
+2024_8,Racing Bulls,0.3098,0.0000,145,True
+2024_8,Red Bull Racing,-1.3633,-0.0010,70,True
+2024_8,Williams,0.0000,0.0153,145,True
+2024_9,Alpine,-0.3192,0.0845,86,True
+2024_9,Aston Martin,0.1311,-0.0857,89,True
+2024_9,Audi,0.9086,0.0941,85,True
+2024_9,Ferrari,0.5618,-0.1043,53,True
+2024_9,Haas F1 Team,0.1492,0.0436,85,True
+2024_9,McLaren,-1.4838,-0.0160,92,True
+2024_9,Mercedes,-1.4055,0.0160,94,True
+2024_9,Racing Bulls,-0.1311,0.0799,87,True
+2024_9,Red Bull Racing,-0.3508,-0.0184,79,True
+2024_9,Williams,0.4364,-0.0795,48,True
+2024_10,Alpine,-0.2656,0.0059,122,False
+2024_10,Aston Martin,0.3018,-0.0191,120,False
+2024_10,Audi,0.4134,-0.0068,120,False
+2024_10,Ferrari,-0.8855,0.0014,122,False
+2024_10,Haas F1 Team,0.2656,0.0004,121,False
+2024_10,McLaren,-1.0123,-0.0130,122,False
+2024_10,Mercedes,-0.9894,-0.0004,122,False
+2024_10,Racing Bulls,0.7240,-0.0309,118,False
+2024_10,Red Bull Racing,-0.7809,0.0141,120,False
+2024_10,Williams,1.1163,0.0268,118,False
+2024_11,Alpine,0.1251,0.0079,130,False
+2024_11,Aston Martin,0.2923,0.0115,126,False
+2024_11,Audi,0.6017,-0.0090,126,False
+2024_11,Ferrari,-0.8037,0.0009,126,False
+2024_11,Haas F1 Team,-0.1251,-0.0133,129,False
+2024_11,McLaren,-1.2693,0.0058,122,False
+2024_11,Mercedes,-0.9224,-0.0009,128,False
+2024_11,Racing Bulls,0.1471,-0.0157,129,False
+2024_11,Red Bull Racing,-0.9698,0.0085,127,False
+2024_11,Williams,0.5447,-0.0079,125,False
+2024_12,Alpine,1.6511,0.0592,29,False
+2024_12,Aston Martin,-0.1130,0.0034,70,False
+2024_12,Audi,1.2672,-0.0370,59,False
+2024_12,Ferrari,-0.3650,-0.0029,63,False
+2024_12,Haas F1 Team,0.1130,-0.0318,71,False
+2024_12,McLaren,-1.2658,-0.0854,69,False
+2024_12,Mercedes,-1.3056,-0.0526,56,False
+2024_12,Racing Bulls,0.6083,0.0101,71,False
+2024_12,Red Bull Racing,-0.4469,0.0029,61,False
+2024_12,Williams,0.3146,0.0110,72,False
+2024_13,Alpine,0.3029,-0.0139,91,False
+2024_13,Aston Martin,-0.0463,-0.0340,130,False
+2024_13,Audi,0.6216,-0.0013,128,False
+2024_13,Ferrari,-1.0119,0.0013,130,False
+2024_13,Haas F1 Team,0.1138,0.0106,127,False
+2024_13,McLaren,-1.3628,0.0152,130,False
+2024_13,Mercedes,-0.9327,0.0045,130,False
+2024_13,Racing Bulls,0.0463,-0.0339,131,False
+2024_13,Red Bull Racing,-1.0448,0.0329,129,False
+2024_13,Williams,0.4144,-0.0029,125,False
+2024_14,Alpine,-0.0310,-0.0047,78,False
+2024_14,Aston Martin,0.0623,-0.0206,82,False
+2024_14,Audi,0.1713,-0.0231,39,False
+2024_14,Ferrari,-0.8332,0.0051,78,False
+2024_14,Haas F1 Team,0.4668,0.0047,80,False
+2024_14,McLaren,-0.9525,0.0056,78,False
+2024_14,Mercedes,-1.1392,-0.0177,80,False
+2024_14,Racing Bulls,0.0310,-0.0190,80,False
+2024_14,Red Bull Racing,-0.6513,0.0512,76,False
+2024_14,Williams,0.4170,0.0357,78,False
+2024_15,Alpine,0.0060,0.0011,136,False
+2024_15,Aston Martin,-0.0060,-0.0045,136,False
+2024_15,Audi,1.0454,0.0314,130,False
+2024_15,Ferrari,-1.0592,-0.0119,138,False
+2024_15,Haas F1 Team,0.1227,-0.0065,135,False
+2024_15,McLaren,-1.3755,0.0000,138,False
+2024_15,Mercedes,-0.9114,-0.0066,134,False
+2024_15,Racing Bulls,0.2147,0.0046,134,False
+2024_15,Red Bull Racing,-1.1256,0.0020,138,False
+2024_15,Williams,0.2621,-0.0000,134,False
+2024_16,Alpine,0.6256,0.0116,96,False
+2024_16,Aston Martin,0.1095,0.0155,93,False
+2024_16,Audi,0.8403,0.0245,98,False
+2024_16,Ferrari,-1.2309,0.0060,100,False
+2024_16,Haas F1 Team,-0.0753,-0.0192,97,False
+2024_16,McLaren,-1.5948,-0.0249,96,False
+2024_16,Mercedes,-1.2347,-0.0570,96,False
+2024_16,Racing Bulls,0.0753,-0.0060,50,False
+2024_16,Red Bull Racing,-0.6047,0.0217,96,False
+2024_16,Williams,0.2234,-0.0112,100,False
+2024_17,Alpine,0.7405,-0.0168,95,False
+2024_17,Aston Martin,0.2096,0.0008,86,False
+2024_17,Audi,0.8362,-0.0139,91,False
+2024_17,Ferrari,-0.8714,0.0441,92,False
+2024_17,Haas F1 Team,0.0072,0.0031,92,False
+2024_17,McLaren,-0.8190,0.0287,92,False
+2024_17,Mercedes,-0.3461,-0.0105,92,False
+2024_17,Racing Bulls,1.1304,-0.0184,57,False
+2024_17,Red Bull Racing,-0.7616,0.0243,91,False
+2024_17,Williams,-0.0072,-0.0008,92,False
+2024_18,Alpine,0.3352,0.0209,116,False
+2024_18,Aston Martin,0.1954,-0.0128,116,False
+2024_18,Audi,0.6278,0.0002,116,False
+2024_18,Ferrari,-0.5010,-0.0128,118,False
+2024_18,Haas F1 Team,0.1471,0.0043,109,False
+2024_18,McLaren,-1.3635,-0.0216,117,False
+2024_18,Mercedes,-0.7186,0.0046,118,False
+2024_18,Racing Bulls,0.0341,-0.0002,112,False
+2024_18,Red Bull Racing,-0.6820,-0.0120,117,False
+2024_18,Williams,-0.0341,0.0068,69,False
+2024_19,Alpine,0.3948,-0.0104,97,False
+2024_19,Aston Martin,0.5665,0.0071,97,False
+2024_19,Audi,0.8077,0.0340,95,False
+2024_19,Ferrari,-1.3775,0.0208,100,False
+2024_19,Haas F1 Team,-0.1120,-0.0173,98,False
+2024_19,McLaren,-1.0652,-0.0033,100,False
+2024_19,Mercedes,-0.4472,-0.0231,50,False
+2024_19,Racing Bulls,0.1120,-0.0098,98,False
+2024_19,Red Bull Racing,-0.6971,0.0229,100,False
+2024_19,Williams,0.2646,0.0033,99,False
+2024_20,Alpine,0.3001,-0.0018,124,False
+2024_20,Aston Martin,0.4912,-0.0201,62,False
+2024_20,Audi,0.6179,0.0013,124,False
+2024_20,Ferrari,-1.4836,0.0093,124,False
+2024_20,Haas F1 Team,-0.2295,-0.0042,125,False
+2024_20,McLaren,-1.0182,-0.0014,125,False
+2024_20,Mercedes,-0.7711,0.0044,126,False
+2024_20,Racing Bulls,0.2295,0.0067,60,False
+2024_20,Red Bull Racing,-0.4259,0.0213,120,False
+2024_20,Williams,0.2411,-0.0013,62,False
+2024_21,Alpine,-0.2742,-0.0059,109,False
+2024_21,Aston Martin,0.0345,0.0436,53,False
+2024_21,Audi,1.1841,-0.0007,105,False
+2024_21,Ferrari,0.1195,0.0007,80,False
+2024_21,Haas F1 Team,0.0826,0.0157,74,False
+2024_21,McLaren,-0.2673,-0.0031,109,False
+2024_21,Mercedes,-0.1202,0.0037,107,False
+2024_21,Racing Bulls,-0.0345,0.0132,105,False
+2024_21,Red Bull Racing,-0.2239,-0.0077,107,False
+2024_21,Williams,0.6796,-0.0045,24,False
+2024_22,Alpine,0.2405,0.0345,54,False
+2024_22,Aston Martin,0.0097,0.0045,90,False
+2024_22,Audi,0.6336,0.0636,89,False
+2024_22,Ferrari,-1.0585,-0.0382,90,False
+2024_22,Haas F1 Team,0.0604,-0.0508,92,False
+2024_22,McLaren,-0.5088,-0.0168,88,False
+2024_22,Mercedes,-1.0545,-0.0054,90,False
+2024_22,Racing Bulls,0.3169,0.0200,90,False
+2024_22,Red Bull Racing,-0.4285,-0.0007,90,False
+2024_22,Williams,-0.0097,0.0007,66,False
+2024_23,Alpine,-0.0493,0.0015,44,False
+2024_23,Aston Martin,0.0493,0.0087,44,False
+2024_23,Audi,0.8126,-0.0077,86,False
+2024_23,Ferrari,-0.8505,-0.0015,89,False
+2024_23,Haas F1 Team,0.5597,0.0028,69,False
+2024_23,McLaren,-1.3088,0.0160,87,False
+2024_23,Mercedes,-0.4930,-0.0095,86,False
+2024_23,Racing Bulls,1.5167,-0.0215,89,False
+2024_23,Red Bull Racing,-0.9586,0.0117,75,False
+2024_23,Williams,1.3583,-0.0177,42,False
+2024_24,Alpine,0.1470,-0.0005,105,False
+2024_24,Aston Martin,0.1141,0.0109,101,False
+2024_24,Audi,0.0352,0.0161,74,False
+2024_24,Ferrari,-1.0481,-0.0131,106,False
+2024_24,Haas F1 Team,0.0907,0.0108,100,False
+2024_24,McLaren,-1.0050,-0.0016,104,False
+2024_24,Mercedes,-0.7576,-0.0056,106,False
+2024_24,Racing Bulls,0.2875,0.0016,99,False
+2024_24,Red Bull Racing,-0.6854,-0.0071,53,False
+2024_24,Williams,-0.0352,0.0005,73,False
+2025_1,Alpine,0.3639,-0.0418,34,True
+2025_1,Aston Martin,0.2593,-0.0034,57,True
+2025_1,Audi,0.8379,-0.0099,59,True
+2025_1,Ferrari,-0.3827,-0.0034,67,True
+2025_1,Haas F1 Team,1.2018,0.0523,64,True
+2025_1,McLaren,-2.2121,0.0102,65,True
+2025_1,Mercedes,-0.7025,0.0049,65,True
+2025_1,Racing Bulls,0.0264,0.0034,33,True
+2025_1,Red Bull Racing,-0.5114,0.0246,62,True
+2025_1,Williams,-0.0264,-0.0086,33,True
+2025_2,Alpine,0.1487,-0.0098,106,False
+2025_2,Aston Martin,0.1951,0.0034,53,False
+2025_2,Audi,0.3220,0.0665,103,False
+2025_2,Ferrari,-0.8035,0.0205,104,False
+2025_2,Haas F1 Team,-0.0397,-0.0139,106,False
+2025_2,McLaren,-1.0589,0.0017,106,False
+2025_2,Mercedes,-0.5043,-0.0082,106,False
+2025_2,Racing Bulls,0.0543,0.0255,99,False
+2025_2,Red Bull Racing,-0.3554,-0.0069,104,False
+2025_2,Williams,0.0397,-0.0017,106,False
+2025_3,Alpine,0.1187,0.0058,100,False
+2025_3,Aston Martin,0.2630,0.0042,97,False
+2025_3,Audi,0.3865,0.0064,100,False
+2025_3,Ferrari,-0.6493,0.0123,100,False
+2025_3,Haas F1 Team,0.1781,0.0011,100,False
+2025_3,McLaren,-0.9739,-0.0011,100,False
+2025_3,Mercedes,-0.7292,-0.0015,100,False
+2025_3,Racing Bulls,-0.0032,-0.0033,100,False
+2025_3,Red Bull Racing,-0.4817,-0.0011,100,False
+2025_3,Williams,0.0032,-0.0019,100,False
+2025_4,Alpine,-0.1476,0.0106,96,False
+2025_4,Aston Martin,0.8074,-0.0106,100,False
+2025_4,Audi,0.6418,-0.0248,98,False
+2025_4,Ferrari,-0.4406,0.0130,100,False
+2025_4,Haas F1 Team,0.1264,0.0049,98,False
+2025_4,McLaren,-0.9901,-0.0345,100,False
+2025_4,Mercedes,-0.2214,0.0199,98,False
+2025_4,Racing Bulls,0.3933,-0.0253,98,False
+2025_4,Red Bull Racing,-0.1264,-0.0049,98,False
+2025_4,Williams,0.4785,0.0378,86,False
+2025_5,Alpine,0.6854,0.0560,44,False
+2025_5,Aston Martin,0.3425,-0.0027,89,False
+2025_5,Audi,0.7317,-0.0013,90,False
+2025_5,Ferrari,-0.8957,0.0013,90,False
+2025_5,Haas F1 Team,0.5349,-0.0131,91,False
+2025_5,McLaren,-1.3455,-0.0048,90,False
+2025_5,Mercedes,-0.8164,0.0215,90,False
+2025_5,Racing Bulls,0.0506,-0.0267,90,False
+2025_5,Red Bull Racing,-1.4822,0.0164,45,False
+2025_5,Williams,-0.0506,0.0026,90,False
+2025_6,Alpine,0.4643,-0.0129,50,False
+2025_6,Aston Martin,0.6500,0.0009,95,False
+2025_6,Audi,0.4086,-0.0087,70,False
+2025_6,Ferrari,-0.2294,0.0027,102,False
+2025_6,Haas F1 Team,0.2294,0.0152,72,False
+2025_6,McLaren,-1.1958,0.0030,101,False
+2025_6,Mercedes,-0.3398,-0.0013,100,False
+2025_6,Racing Bulls,0.6560,-0.0009,77,False
+2025_6,Red Bull Racing,-0.3343,0.0062,99,False
+2025_6,Williams,-0.2558,-0.0112,98,False
+2025_7,Alpine,0.5437,0.0193,97,False
+2025_7,Aston Martin,0.5373,0.0338,98,False
+2025_7,Audi,0.6355,-0.0094,100,False
+2025_7,Ferrari,-0.4106,0.0118,100,False
+2025_7,Haas F1 Team,0.0104,0.0256,74,False
+2025_7,McLaren,-1.0759,-0.0217,97,False
+2025_7,Mercedes,-0.0104,-0.0056,90,False
+2025_7,Racing Bulls,0.2701,0.0056,100,False
+2025_7,Red Bull Racing,-0.3947,-0.0132,101,False
+2025_7,Williams,-0.1190,-0.0088,99,False
+2025_8,Alpine,0.9792,-0.0101,67,False
+2025_8,Aston Martin,0.0852,0.0204,97,False
+2025_8,Audi,0.8532,0.0208,134,False
+2025_8,Ferrari,-2.1483,-0.0095,131,False
+2025_8,Haas F1 Team,-0.0852,0.0094,138,False
+2025_8,McLaren,-2.5719,0.0070,131,False
+2025_8,Mercedes,0.6221,-0.0070,131,False
+2025_8,Racing Bulls,-0.5565,0.0135,131,False
+2025_8,Red Bull Racing,-0.8475,-0.0079,135,False
+2025_8,Williams,0.6237,-0.0574,129,False
+2025_9,Alpine,0.7466,0.0084,108,False
+2025_9,Aston Martin,0.0746,0.0040,53,False
+2025_9,Audi,0.0800,-0.0346,108,False
+2025_9,Ferrari,-1.0877,-0.0040,108,False
+2025_9,Haas F1 Team,0.4656,0.0055,108,False
+2025_9,McLaren,-1.7538,-0.0088,108,False
+2025_9,Mercedes,-0.7529,0.0063,102,False
+2025_9,Racing Bulls,-0.0746,-0.0269,108,False
+2025_9,Red Bull Racing,-0.3649,0.0727,104,False
+2025_9,Williams,0.1043,-0.0095,76,False
+2025_10,Alpine,0.3543,0.0066,124,False
+2025_10,Aston Martin,-0.0047,0.0261,120,False
+2025_10,Audi,0.3282,-0.0039,124,False
+2025_10,Ferrari,-0.8919,-0.0080,121,False
+2025_10,Haas F1 Team,0.0846,-0.0005,124,False
+2025_10,McLaren,-1.3845,0.0005,122,False
+2025_10,Mercedes,-1.4419,-0.0099,122,False
+2025_10,Racing Bulls,0.5660,0.0046,112,False
+2025_10,Red Bull Racing,-0.5723,-0.0006,123,False
+2025_10,Williams,0.0047,0.0086,104,False
+2025_11,Alpine,0.2876,0.0284,123,False
+2025_11,Aston Martin,0.0000,0.0108,126,False
+2025_11,Audi,-0.1639,-0.0169,124,False
+2025_11,Ferrari,-1.0799,0.0057,126,False
+2025_11,Haas F1 Team,0.0516,-0.0065,124,False
+2025_11,McLaren,-1.6414,0.0173,126,False
+2025_11,Mercedes,-0.2262,-0.0153,63,False
+2025_11,Racing Bulls,0.0388,0.0000,129,False
+2025_11,Red Bull Racing,0.1900,-0.0018,59,False
+2025_12,Alpine,-0.2784,0.0532,31,True
+2025_12,Aston Martin,0.0000,0.0000,64,True
+2025_12,Audi,-0.5664,-0.0704,32,True
+2025_12,Ferrari,-0.3294,-0.0293,62,True
+2025_12,Haas F1 Team,0.5109,0.0667,60,True
+2025_12,McLaren,-1.8289,-0.0285,68,True
+2025_12,Mercedes,0.2997,-0.0645,31,True
+2025_12,Red Bull Racing,0.0927,0.0658,63,True
+2025_12,Williams,0.0322,0.0692,64,True
+2025_13,Alpine,0.5512,-0.0279,61,False
+2025_13,Aston Martin,0.4755,-0.0213,60,False
+2025_13,Audi,-0.0507,0.0019,60,False
+2025_13,Ferrari,-0.7329,0.0051,63,False
+2025_13,Haas F1 Team,0.2272,-0.0198,60,False
+2025_13,McLaren,-1.2872,0.0058,61,False
+2025_13,Mercedes,-0.0064,0.0005,60,False
+2025_13,Racing Bulls,0.4209,-0.0140,58,False
+2025_13,Red Bull Racing,-0.3855,-0.0005,61,False
+2025_13,Williams,0.0064,0.0131,60,False
+2025_14,Alpine,0.3331,0.0297,130,False
+2025_14,Aston Martin,-0.1151,-0.0184,134,False
+2025_14,Audi,-0.0463,-0.0052,131,False
+2025_14,Ferrari,-0.4238,0.0093,131,False
+2025_14,Haas F1 Team,0.5382,-0.0001,110,False
+2025_14,McLaren,-1.3279,0.0001,132,False
+2025_14,Mercedes,-0.3788,-0.0230,131,False
+2025_14,Racing Bulls,0.0463,-0.0094,133,False
+2025_14,Red Bull Racing,0.1769,0.0168,129,False
+2025_14,Williams,0.4207,0.0227,128,False
+2025_15,Alpine,0.7090,0.0137,110,False
+2025_15,Aston Martin,0.3389,0.0018,105,False
+2025_15,Audi,0.8775,0.0002,107,False
+2025_15,Ferrari,-0.4712,-0.0033,64,False
+2025_15,Haas F1 Team,0.7627,-0.0251,111,False
+2025_15,McLaren,-1.6090,-0.0065,108,False
+2025_15,Mercedes,-0.2242,-0.0081,110,False
+2025_15,Racing Bulls,-0.2823,0.0054,108,False
+2025_15,Red Bull Racing,-0.1089,0.0069,110,False
+2025_15,Williams,0.1089,-0.0002,107,False
+2025_16,Alpine,0.4263,-0.0013,98,False
+2025_16,Aston Martin,0.1425,0.0025,69,False
+2025_16,Audi,0.0454,-0.0055,50,False
+2025_16,Ferrari,-0.5313,-0.0018,100,False
+2025_16,Haas F1 Team,0.1411,-0.0027,98,False
+2025_16,McLaren,-1.0076,0.0052,100,False
+2025_16,Mercedes,-0.2981,0.0013,100,False
+2025_16,Racing Bulls,0.1161,0.0069,100,False
+2025_16,Red Bull Racing,-0.4567,0.0138,100,False
+2025_16,Williams,-0.0454,-0.0112,99,False
+2025_17,Alpine,1.0839,0.0118,86,False
+2025_17,Aston Martin,0.7584,-0.0006,88,False
+2025_17,Audi,0.4661,0.0231,88,False
+2025_17,Ferrari,-0.1809,0.0074,88,False
+2025_17,Haas F1 Team,0.6509,0.0006,90,False
+2025_17,McLaren,-0.0046,-0.0252,44,False
+2025_17,Mercedes,-0.3634,-0.0115,89,False
+2025_17,Racing Bulls,-0.0864,0.0140,89,False
+2025_17,Red Bull Racing,-0.3812,-0.0151,90,False
+2025_17,Williams,0.0046,-0.0048,89,False
+2025_18,Alpine,0.1930,0.0223,114,False
+2025_18,Aston Martin,0.0493,-0.0470,117,False
+2025_18,Audi,0.0345,0.0271,114,False
+2025_18,Ferrari,-1.2478,0.0230,113,False
+2025_18,Haas F1 Team,0.1843,-0.0276,117,False
+2025_18,McLaren,-1.4723,0.0054,118,False
+2025_18,Mercedes,-1.3941,0.0143,118,False
+2025_18,Racing Bulls,0.0640,-0.0059,116,False
+2025_18,Red Bull Racing,-0.8259,-0.0054,117,False
+2025_18,Williams,-0.0345,-0.0130,116,False
+2025_19,Alpine,0.4885,0.0166,100,False
+2025_19,Aston Martin,0.0953,-0.0200,102,False
+2025_19,Audi,0.0834,-0.0078,99,False
+2025_19,Ferrari,-0.8908,0.0086,102,False
+2025_19,Haas F1 Team,0.0138,0.0017,102,False
+2025_19,McLaren,-0.8503,-0.0033,102,False
+2025_19,Mercedes,-0.4190,0.0017,101,False
+2025_19,Racing Bulls,0.2944,-0.0205,102,False
+2025_19,Red Bull Racing,-0.7083,-0.0010,102,False
+2025_19,Williams,-0.0138,0.0010,51,False
+2025_20,Alpine,0.9074,-0.0149,130,False
+2025_20,Aston Martin,0.2785,0.0111,93,False
+2025_20,Audi,0.3860,-0.0018,90,False
+2025_20,Ferrari,-0.4886,0.0045,130,False
+2025_20,Haas F1 Team,-0.1267,-0.0156,131,False
+2025_20,McLaren,-0.7530,0.0018,130,False
+2025_20,Mercedes,-0.2910,0.0024,127,False
+2025_20,Racing Bulls,0.2270,0.0027,65,False
+2025_20,Red Bull Racing,-0.2836,-0.0039,132,False
+2025_20,Williams,0.1267,-0.0099,125,False
+2025_21,Alpine,0.0094,0.0067,119,False
+2025_21,Aston Martin,0.0153,0.0096,118,False
+2025_21,Audi,-0.0078,-0.0077,62,False
+2025_21,Ferrari,0.6238,0.0499,24,False
+2025_21,Haas F1 Team,-0.2823,-0.0198,120,False
+2025_21,McLaren,-0.8593,-0.0213,120,False
+2025_21,Mercedes,-0.7309,-0.0067,120,False
+2025_21,Racing Bulls,0.0297,-0.0133,122,False
+2025_21,Red Bull Racing,-0.4443,0.0218,118,False
+2025_21,Williams,0.0078,0.0086,120,False
+2025_22,Alpine,0.7904,0.0129,87,False
+2025_22,Aston Martin,0.6938,0.0438,45,False
+2025_22,Audi,0.1448,-0.0267,44,False
+2025_22,Ferrari,-0.1448,-0.0074,88,False
+2025_22,Haas F1 Team,0.3689,-0.0036,88,False
+2025_22,McLaren,-0.5565,-0.0085,87,False
+2025_22,Mercedes,-0.4738,-0.0029,89,False
+2025_22,Racing Bulls,0.2374,0.0029,85,False
+2025_22,Red Bull Racing,-0.2675,0.0140,86,False
+2025_22,Williams,-0.2205,0.0175,69,False
+2025_23,Alpine,0.5612,0.0219,98,False
+2025_23,Aston Martin,0.0144,-0.0294,95,False
+2025_23,Audi,0.6147,0.0209,50,False
+2025_23,Ferrari,0.2408,0.0087,100,False
+2025_23,Haas F1 Team,0.4384,0.0242,81,False
+2025_23,McLaren,-1.4875,-0.0229,96,False
+2025_23,Mercedes,-0.5153,0.0008,100,False
+2025_23,Racing Bulls,-0.0144,-0.0221,97,False
+2025_23,Red Bull Racing,-0.5898,-0.0134,100,False
+2025_23,Williams,-0.2506,-0.0008,100,False
+2025_24,Alpine,0.3150,0.0327,104,False
+2025_24,Aston Martin,0.0318,-0.0232,110,False
+2025_24,Audi,-0.0293,0.0020,108,False
+2025_24,Ferrari,-0.5367,0.0174,106,False
+2025_24,Haas F1 Team,0.0293,-0.0166,110,False
+2025_24,McLaren,-1.0746,-0.0233,108,False
+2025_24,Mercedes,-0.0918,-0.0061,110,False
+2025_24,Racing Bulls,0.2252,-0.0020,108,False
+2025_24,Red Bull Racing,-0.4990,0.0028,110,False
+2025_24,Williams,0.1076,0.0096,108,False
+2026_1,Alpine,0.4523,-0.0099,93,False
+2026_1,Aston Martin,2.8207,0.0480,44,False
+2026_1,Audi,0.0000,0.0094,49,False
+2026_1,Cadillac,3.1365,0.0249,55,False
+2026_1,Ferrari,-1.6276,-0.0337,94,False
+2026_1,Haas F1 Team,-0.0259,-0.0152,98,False
+2026_1,McLaren,-1.1300,-0.0431,50,False
+2026_1,Mercedes,-2.1133,-0.0262,100,False
+2026_1,Racing Bulls,0.1280,0.0000,97,False
+2026_1,Red Bull Racing,-1.0910,0.0229,49,False
+2026_1,Williams,1.0447,0.0190,94,False
+2026_2,Alpine,-0.2939,0.0004,99,False
+2026_2,Aston Martin,1.9498,-0.0388,25,False
+2026_2,Audi,0.0786,0.0021,48,False
+2026_2,Cadillac,1.7103,0.0078,99,False
+2026_2,Ferrari,-1.3169,0.0061,102,False
+2026_2,Haas F1 Team,-0.0786,-0.0109,96,False
+2026_2,Mercedes,-1.8536,-0.0004,102,False
+2026_2,Racing Bulls,0.1362,-0.0051,97,False
+2026_2,Red Bull Racing,-0.1680,-0.0006,88,False
+2026_2,Williams,0.5817,0.0038,49,False
+2026_3,Alpine,-0.2918,0.0014,89,False
+2026_3,Aston Martin,2.1514,0.0096,66,False
+2026_3,Audi,0.1711,-0.0282,92,False
+2026_3,Cadillac,1.8354,0.0000,86,False
+2026_3,Ferrari,-1.3740,0.0020,90,False
+2026_3,Haas F1 Team,0.0000,0.0085,61,False
+2026_3,McLaren,-1.4702,-0.0007,88,False
+2026_3,Mercedes,-1.6998,0.0028,91,False
+2026_3,Racing Bulls,0.0504,-0.0023,89,False
+2026_3,Red Bull Racing,-0.3249,-0.0120,90,False
+2026_3,Williams,0.5929,-0.0223,84,False
+2026_4,Alpine,-0.5295,-0.0103,48,False
+2026_4,Aston Martin,1.6360,-0.0141,91,False
+2026_4,Audi,0.3491,-0.0143,47,False
+2026_4,Cadillac,2.6005,0.0145,90,False
+2026_4,Ferrari,-1.1683,0.0072,95,False
+2026_4,Haas F1 Team,0.2509,0.0079,94,False
+2026_4,McLaren,-1.6419,0.0000,96,False
+2026_4,Mercedes,-1.4794,-0.0073,96,False
+2026_4,Racing Bulls,0.8571,-0.0018,46,False
+2026_4,Red Bull Racing,-1.3407,0.0072,50,False
+2026_4,Williams,0.0000,0.0031,96,False
+2026_5,Alpine,0.0000,-0.0156,117,False
+2026_5,Aston Martin,3.3517,0.0253,71,False
+2026_5,Audi,0.0829,0.0116,106,False
+2026_5,Cadillac,1.7391,-0.0173,80,False
+2026_5,Ferrari,-1.7539,0.0206,117,False
+2026_5,Haas F1 Team,0.8812,-0.0156,112,False
+2026_5,McLaren,-0.8057,-0.0012,85,False
+2026_5,Mercedes,-2.1864,0.0101,86,False
+2026_5,Racing Bulls,0.1935,-0.0148,59,False
+2026_5,Red Bull Racing,-1.6775,0.0080,116,False
+2026_5,Williams,-0.1275,0.0000,59,False
+2026_6,Alpine,0.0000,-0.0176,125,False
+2026_6,Aston Martin,0.6488,-0.0100,114,False
+2026_6,Audi,0.3637,0.0168,120,False
+2026_6,Cadillac,1.9224,0.0321,73,False
+2026_6,Ferrari,-2.3567,-0.0114,117,False
+2026_6,Haas F1 Team,0.5415,0.0420,87,False
+2026_6,McLaren,-0.9868,0.0000,104,False
+2026_6,Mercedes,-2.0305,-0.0218,124,False
+2026_6,Racing Bulls,-0.1368,0.0089,128,False
+2026_6,Red Bull Racing,-1.0570,0.0156,63,False
+2026_6,Williams,0.3851,-0.0145,116,False
+2026_7,Alpine,0.0000,-0.0258,111,False
+2026_7,Aston Martin,2.3437,-0.0005,34,False
+2026_7,Audi,0.4431,0.0108,77,False
+2026_7,Cadillac,2.6214,0.0788,64,False
+2026_7,Ferrari,-2.0914,0.0184,109,False
+2026_7,Haas F1 Team,1.1204,0.0421,105,False
+2026_7,McLaren,-2.0352,-0.0071,112,False
+2026_7,Mercedes,-2.3607,0.0000,109,False
+2026_7,Racing Bulls,-0.0034,-0.0318,110,False
+2026_7,Red Bull Racing,-1.3822,0.0073,110,False
+2026_7,Williams,0.8134,-0.0256,95,False
+2026_8,Alpine,0.5037,-0.0180,120,False
+2026_8,Aston Martin,2.5496,0.0103,101,False
+2026_8,Audi,0.1764,-0.0192,120,False
+2026_8,Ferrari,-1.2913,-0.0004,122,False
+2026_8,Haas F1 Team,1.0456,0.0098,120,False
+2026_8,McLaren,-1.3341,0.0053,124,False
+2026_8,Mercedes,-1.8076,0.0004,125,False
+2026_8,Racing Bulls,-0.1764,-0.0013,122,False
+2026_8,Red Bull Racing,-1.5614,-0.0065,123,False
+2026_8,Williams,1.4419,0.0200,79,False
+2026_9,Alpine,0.1934,-0.0244,83,False
+2026_9,Aston Martin,3.1907,0.0057,77,False
+2026_9,Audi,0.0000,-0.0084,69,False
+2026_9,Cadillac,1.7216,0.0026,78,False
+2026_9,Ferrari,-1.6095,0.0128,82,False
+2026_9,Haas F1 Team,0.9222,-0.0117,81,False
+2026_9,McLaren,-0.9713,0.0000,79,False
+2026_9,Mercedes,-1.6883,-0.0150,75,False
+2026_9,Racing Bulls,-0.3201,-0.0006,82,False
+2026_9,Red Bull Racing,-0.9797,0.0250,80,False
+2026_9,Williams,1.0153,0.0092,70,False
+2026_10,Alpine,0.0990,-0.0184,72,False
+2026_10,Aston Martin,3.4740,0.0322,48,False
+2026_10,Audi,0.0000,-0.0157,74,False
+2026_10,Cadillac,1.9235,0.0100,35,False
+2026_10,Ferrari,-1.2134,0.0070,74,False
+2026_10,Haas F1 Team,0.5743,0.0111,73,False
+2026_10,McLaren,-1.1461,0.0139,72,False
+2026_10,Mercedes,-1.4762,-0.0084,36,False
+2026_10,Racing Bulls,-0.1621,-0.0138,72,False
+2026_10,Red Bull Racing,-1.1784,-0.0026,73,False
+2026_10,Williams,0.5984,0.0000,73,False
+2026_11,Alpine,0.5835,0.0313,123,False
+2026_11,Aston Martin,0.4046,-0.0236,126,False
+2026_11,Audi,0.0000,0.0080,126,False
+2026_11,Cadillac,2.2010,0.0451,54,False
+2026_11,Ferrari,-1.4801,0.0023,124,False
+2026_11,Haas F1 Team,1.2436,-0.0093,120,False
+2026_11,McLaren,-1.7436,0.0099,111,False
+2026_11,Mercedes,-1.4214,-0.0161,126,False
+2026_11,Racing Bulls,-0.0705,0.0000,126,False
+2026_11,Red Bull Racing,-1.3745,-0.0081,125,False
+2026_11,Williams,1.5728,-0.0217,122,False
+2026_12,Alpine,0.0048,-0.0058,111,False
+2026_12,Aston Martin,0.3235,-0.0145,95,False
+2026_12,Audi,-0.1609,-0.0083,114,False
+2026_12,Cadillac,1.5043,0.0414,104,False
+2026_12,Ferrari,-2.2775,0.0289,118,False
+2026_12,Haas F1 Team,0.3399,-0.0250,43,False
+2026_12,McLaren,-2.3450,0.0408,115,False
+2026_12,Mercedes,-2.2774,0.0179,116,False
+2026_12,Racing Bulls,0.0000,-0.0131,115,False
+2026_12,Red Bull Racing,-1.2609,0.0260,59,False
+2026_12,Williams,0.7866,0.0000,107,False
+2026_13,Alpine,0.0000,-0.0168,92,False
+2026_13,Aston Martin,2.3978,0.0291,38,False
+2026_13,Audi,0.4290,-0.0055,93,False
+2026_13,Cadillac,2.2853,-0.0012,87,False
+2026_13,Ferrari,-0.6420,0.0093,46,False
+2026_13,Haas F1 Team,0.6394,0.0219,91,False
+2026_13,McLaren,-0.6187,-0.0034,92,False
+2026_13,Mercedes,-1.1367,-0.0064,92,False
+2026_13,Racing Bulls,-0.0325,0.0099,94,False
+2026_13,Red Bull Racing,-0.4971,0.0026,90,False
+2026_13,Williams,0.6497,0.0000,89,False
+2026_14,Alpine,-0.2227,0.0000,105,False
+2026_14,Aston Martin,1.9733,0.0301,61,False
+2026_14,Audi,0.0000,-0.0017,104,False
+2026_14,Cadillac,2.2182,0.0231,72,False
+2026_14,Ferrari,-1.5850,0.0006,52,False
+2026_14,Haas F1 Team,0.4412,-0.0110,102,False
+2026_14,McLaren,-1.1830,-0.0045,105,False
+2026_14,Mercedes,-1.8642,0.0259,106,False
+2026_14,Racing Bulls,0.3464,-0.0088,104,False
+2026_14,Red Bull Racing,-1.2101,0.0061,105,False
+2026_14,Williams,1.5012,-0.0001,89,False
+2026_15,Alpine,-0.5157,0.0147,56,False
+2026_15,Aston Martin,2.1396,0.0047,18,False
+2026_15,Audi,0.2925,0.0122,82,False
+2026_15,Cadillac,1.3751,0.0261,77,False
+2026_15,Ferrari,-0.9002,-0.0117,83,False
+2026_15,Haas F1 Team,0.0000,-0.0099,82,False
+2026_15,McLaren,-0.7934,-0.0147,69,False
+2026_15,Mercedes,-1.3144,-0.0025,83,False
+2026_15,Racing Bulls,0.1464,-0.0113,82,False
+2026_15,Red Bull Racing,-1.3319,0.0092,84,False
+2026_15,Williams,0.1135,0.0000,67,False
+2026_16,Alpine,-0.0502,-0.0159,60,False
+2026_16,Aston Martin,0.0000,-0.0229,62,False
+2026_16,Audi,0.5040,0.0612,59,False
+2026_16,Cadillac,2.4456,0.2050,26,False
+2026_16,Ferrari,-1.3536,-0.0390,61,False
+2026_16,Haas F1 Team,0.2547,0.0000,58,False
+2026_16,McLaren,-0.7604,0.0345,62,False
+2026_16,Mercedes,-1.5176,-0.0129,60,False
+2026_16,Racing Bulls,0.1404,0.0117,63,False
+2026_16,Red Bull Racing,-1.5888,-0.0200,64,False
+2026_16,Williams,0.8779,0.0396,53,False
+2026_17,Alpine,0.1959,-0.0127,81,False
+2026_17,Aston Martin,1.3782,-0.0464,85,False
+2026_17,Audi,-0.2011,-0.0278,55,False
+2026_17,Cadillac,2.1820,0.0059,104,False
+2026_17,Ferrari,-1.3935,0.0328,110,False
+2026_17,Haas F1 Team,0.0000,0.0016,108,False
+2026_17,McLaren,-1.2915,0.0086,108,False
+2026_17,Mercedes,-0.7623,-0.0288,112,False
+2026_17,Racing Bulls,0.1794,-0.0072,110,False
+2026_17,Red Bull Racing,-1.2024,0.0075,110,False
+2026_17,Williams,0.7576,0.0000,105,False
+2026_18,Alpine,0.1966,-0.0095,80,False
+2026_18,Aston Martin,0.3281,-0.0402,92,False
+2026_18,Audi,0.0000,-0.0328,98,False
+2026_18,Cadillac,1.3970,-0.0155,92,False
+2026_18,Ferrari,-1.5742,0.0124,94,False
+2026_18,Haas F1 Team,0.6005,0.0238,66,False
+2026_18,McLaren,-1.3141,0.0000,98,False
+2026_18,Mercedes,-1.3402,0.0149,98,False
+2026_18,Racing Bulls,-0.1853,-0.0116,97,False
+2026_18,Red Bull Racing,-1.3536,0.0034,96,False
+2026_18,Williams,1.0168,0.0508,92,False
+2026_19,Alpine,0.0825,0.0059,116,False
+2026_19,Audi,0.4004,-0.0044,116,False
+2026_19,Cadillac,1.4333,0.0096,94,False
+2026_19,Ferrari,-1.3490,0.0041,116,False
+2026_19,Haas F1 Team,0.5849,-0.0018,95,False
+2026_19,McLaren,-0.6687,-0.0061,116,False
+2026_19,Mercedes,-1.1869,-0.0058,117,False
+2026_19,Racing Bulls,-0.0825,0.0018,105,False
+2026_19,Red Bull Racing,-0.7409,-0.0070,116,False
+2026_19,Williams,0.8200,0.0063,112,False
+2026_20,Alpine,0.0000,0.0344,76,True
+2026_20,Aston Martin,1.2079,-0.0157,48,True
+2026_20,Audi,0.0369,0.0037,72,True
+2026_20,Cadillac,1.6577,0.0115,39,True
+2026_20,Ferrari,-1.0977,0.0144,74,True
+2026_20,Haas F1 Team,0.8464,-0.0151,70,True
+2026_20,McLaren,-1.3423,-0.0094,78,True
+2026_20,Mercedes,-1.2129,-0.0006,75,True
+2026_20,Racing Bulls,-0.1509,-0.0434,77,True
+2026_20,Red Bull Racing,-1.2853,0.0000,81,True
+2026_20,Williams,0.9190,0.0121,75,True
+2026_21,Alpine,-0.1281,-0.0007,84,False
+2026_21,Aston Martin,1.6899,0.0643,83,False
+2026_21,Audi,0.3553,0.0000,83,False
+2026_21,Cadillac,1.5298,0.0728,58,False
+2026_21,Ferrari,-0.3163,0.0145,83,False
+2026_21,Haas F1 Team,0.7214,0.0145,83,False
+2026_21,McLaren,-0.2984,-0.0058,84,False
+2026_21,Mercedes,-0.2831,-0.0040,83,False
+2026_21,Racing Bulls,0.1432,-0.0598,57,False
+2026_21,Red Bull Racing,-0.4132,-0.0139,82,False
+2026_21,Williams,0.0000,0.0185,42,False

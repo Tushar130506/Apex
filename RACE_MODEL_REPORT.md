@@ -146,6 +146,42 @@ needs lap data and belongs to the degradation work. The features stay in
 `apex.features.form_features.TEMPERATURE_COLUMNS` and the test reproduces
 with `python scripts/compare_features.py --set temperature`.
 
+## Fuel, track and tyre wear from race lap times
+
+Measured for 69 races (2024 to 2026 round 21) from official lap times and pit
+stops (`scripts/race_pace_study.py`, Jolpica API, no account). Per race, clean
+laps are fitted with one pace per driver, a term for each lap run (fuel burn
+and the track gaining grip, which cannot be told apart here) and a tyre-age
+curve; tyre age resets at each stop while the lap count keeps rising, which
+separates the two. Pit, first, safety-car and traffic laps are dropped.
+Output: `runs/race_pace/races.csv`, `circuits.csv` and `teams.csv`.
+
+- **Fuel and track:** laps get 0.056 s faster per lap (median of the 64 dry
+  races; 10th-90th percentile 0.034 to 0.083). The strategy model's built-in
+  assumption, 0.032 s/kg at 1.6 kg/lap = 0.051 s/lap, is consistent.
+- **Tyre wear:** a 20-lap-old tyre is 1.0 s slower than a new one (median),
+  highest at Bahrain (2.3 s) and Barcelona (1.7 s), lowest at Monza (0.2 s).
+  The data has no compounds, so this is an average over the tyres used.
+- **Wet or drying races** are flagged when the field's lap times spread more
+  than 6% (dry races: 1.5 to 4.9%) and left out of the circuit table: Canada
+  2024, Australia 2025, Silverstone 2025 and Brazil 2026, plus Monaco 2024
+  (dry; its red-flag restart and slow tyre-saving laps spread the times).
+- **Wear that looks negative** (6 of 64 dry races, among them Canada and Las
+  Vegas 2026) means laps got faster with tyre age beyond the lap-count term:
+  graining clearing or the track rubbering in, not wear. The strategy model
+  turns such a curve into no wear rather than tyres improving.
+- **Qatar** is not usable as a circuit figure: 2024 came out at -1.2 s (many
+  stops and safety cars) and 2025 had a 25-lap stint limit, so its median
+  (-0.3 s) says nothing about this weekend.
+
+Each team's race pace and tyre wear against the field are also measured
+(`team_race_pace`). 2026 so far, mean gap to the median team at a 12-lap-old
+tyre: Mercedes -1.6%, Ferrari -1.4%, McLaren -1.2%, Red Bull -1.1%, the
+midfield within 0.7%, Aston Martin +1.8% and Cadillac +2.0%. Team wear
+differences are small (within 0.01 s/lap for all but Cadillac). As features
+(`RACE_PACE_COLUMNS`, earlier races only) they are not in the model; testing
+them needs 2018-2023 lap data, which is being downloaded.
+
 ## Forecasts
 
 Updated 22 November 2026. The feature table ends at round 19 (Mexico City).

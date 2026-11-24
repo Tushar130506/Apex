@@ -83,6 +83,21 @@ It refits both models before every 2021-2025 race and reports the log-loss
 difference with a bootstrap interval. The temperature features gave no
 measurable gain, so they are not in the model.
 
+### Fuel, track and tyre wear from race laps
+
+```bash
+python scripts/race_pace_study.py --seasons 2024 2025 2026
+```
+
+Measures, from official lap times and pit stops (no account), how much faster
+laps get per lap run (fuel burn plus track grip) and how much time a tyre
+loses with age, per race, per circuit (dry races only) and per team. The
+first run downloads about 14 pages per race at the API's rate limit (2024-2026
+takes about three hours) into `data/raw/jolpica/`; later runs read the cache.
+Results for 2024-2026 are in `runs/race_pace/` and `RACE_MODEL_REPORT.md`.
+`ParametricPace.for_circuit("runs/race_pace/circuits.csv", "bahrain")` gives
+the strategy simulator that circuit's measured numbers.
+
 `predict_race.py` and `forecast_season.py` accept `--extra-results` for
 official results of races missing from the feature table
 (`race_id, track, driver, team, grid_position, finish_position, status`).
@@ -206,6 +221,7 @@ The optional strategy API uses the pace model fitted by that run.
 | `apex.models.pace`, `apex.features.lap_features` | Lap-pace GBM, conformal intervals, lap features |
 | `apex.features.fuel` | Fuel correction and fuel-burn sampling |
 | `apex.features.tyre_degradation`, `apex.models.degradation` | Degradation by compound and by stint |
+| `apex.features.race_pace`, `apex.ingestion.jolpica` | Fuel/track and tyre wear per race, circuit and team from official lap times |
 | `apex.strategy` | Parametric pace model and pit-strategy simulator |
 | `apex.models.race_monte_carlo`, `apex.models.safety_hazard` | Lap-level race simulation and safety-car hazard |
 | `apex.models.replay` | Leakage-safe lap-by-lap replay of a finished race |
@@ -262,8 +278,9 @@ Candidates proposed by the surrogate must be re-run in CFD.
   table ends at 2026 round 19 (round 20 is in `data/manual/` as results only). Sprint points count only when a sprint results
   file is passed to `forecast_season.py`; stored forecasts in `runs/` are race
   points only. Sprint results are not used as model features.
-- **Fuel is estimated:** FastF1 has no fuel data, so fuel mass is a linear
-  burn from an assumed start load, and the fuel sensitivity is an assumption.
+- **Fuel is estimated:** there is no fuel data, so fuel mass is a linear burn
+  from an assumed start load. The per-lap gain measured from race laps
+  (`runs/race_pace/`) mixes fuel with track grip and has no tyre compounds.
 - **Points:** derived from classified finishing position on the 25-18-15-12-10-8-6-4-2-1
   scale (sprints 8-7-6-5-4-3-2-1), with no fastest-lap bonus. The 2021
   sprints paid 3-2-1, so derived sprint points for 2021 are too high.

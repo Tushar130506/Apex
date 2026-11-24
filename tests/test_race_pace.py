@@ -126,3 +126,13 @@ def test_race_pace_form_uses_earlier_races_only():
     assert out.loc[1, "team_race_pace_form"] == pytest.approx(0.5)
     assert out.loc[2, "team_race_deg_form"] == pytest.approx(-0.02)
     assert out.loc[3, "team_race_pace_form"] == pytest.approx(0.5)  # wet 2025_2 ignored
+
+
+def test_team_pace_ignores_drivers_with_a_handful_of_laps():
+    laps, pits = _race()
+    team = {f"D{n:02d}": f"T{n // 2}" for n in range(16)}
+    laps = laps.assign(team=laps["driver"].map(team))
+    laps = laps[~(laps["driver"].eq("D15") & laps["lap_no"].gt(3))]     # early retirement
+    pits = pits[pits["driver"].ne("D15")]
+    result = team_race_pace(clean_race_laps(laps, pits)).set_index("team")
+    assert result["pace_gap_pct"].abs().max() < 3
