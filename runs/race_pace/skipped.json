@@ -1,5 +1,9 @@
 [
   {
+    "race_id": "2021_12",
+    "reason": "too few clean laps (0) or drivers (0)"
+  },
+  {
     "race_id": "2026_22",
     "reason": "no classification for 2026 round 22"
   },

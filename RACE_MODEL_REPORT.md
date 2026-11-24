@@ -148,39 +148,53 @@ with `python scripts/compare_features.py --set temperature`.
 
 ## Fuel, track and tyre wear from race lap times
 
-Measured for 69 races (2024 to 2026 round 21) from official lap times and pit
-stops (`scripts/race_pace_study.py`, Jolpica API, no account). Per race, clean
-laps are fitted with one pace per driver, a term for each lap run (fuel burn
-and the track gaining grip, which cannot be told apart here) and a tyre-age
-curve; tyre age resets at each stop while the lap count keeps rising, which
-separates the two. Pit, first, safety-car and traffic laps are dropped.
-Output: `runs/race_pace/races.csv`, `circuits.csv` and `teams.csv`.
+Measured for 134 races (2021 to 2026 round 21; Belgium 2021 had no racing
+laps) from official lap times and pit stops (`scripts/race_pace_study.py`,
+Jolpica API, no account). Per race, clean laps are fitted with one pace per
+driver, a term for each lap run (fuel burn and the track gaining grip, which
+cannot be told apart here) and a tyre-age curve; tyre age resets at each stop
+while the lap count keeps rising, which separates the two. Pit, first,
+safety-car and traffic laps are dropped. Output: `runs/race_pace/races.csv`,
+`circuits.csv` and `teams.csv`.
 
-- **Fuel and track:** laps get 0.056 s faster per lap (median of the 64 dry
-  races; 10th-90th percentile 0.034 to 0.083). The strategy model's built-in
+- **Fuel and track:** laps get 0.057 s faster per lap (median of the 126 dry
+  races; 10th-90th percentile 0.036 to 0.084). The strategy model's built-in
   assumption, 0.032 s/kg at 1.6 kg/lap = 0.051 s/lap, is consistent.
-- **Tyre wear:** a 20-lap-old tyre is 1.0 s slower than a new one (median),
-  highest at Bahrain (2.3 s) and Barcelona (1.7 s), lowest at Monza (0.2 s).
-  The data has no compounds, so this is an average over the tyres used.
+- **Tyre wear:** a 20-lap-old tyre is 0.9 s slower than a new one (median),
+  highest at Suzuka and Bahrain (2.4 s) and Barcelona (1.7 s), lowest at
+  Monaco and Jeddah (0.2 s or less). The data has no compounds, so this is an
+  average over the tyres used.
 - **Wet or drying races** are flagged when the field's lap times spread more
-  than 6% (dry races: 1.5 to 4.9%) and left out of the circuit table: Canada
-  2024, Australia 2025, Silverstone 2025 and Brazil 2026, plus Monaco 2024
-  (dry; its red-flag restart and slow tyre-saving laps spread the times).
-- **Wear that looks negative** (6 of 64 dry races, among them Canada and Las
-  Vegas 2026) means laps got faster with tyre age beyond the lap-count term:
-  graining clearing or the track rubbering in, not wear. The strategy model
-  turns such a curve into no wear rather than tyres improving.
-- **Qatar** is not usable as a circuit figure: 2024 came out at -1.2 s (many
-  stops and safety cars) and 2025 had a 25-lap stint limit, so its median
-  (-0.3 s) says nothing about this weekend.
+  than 6% (dry races: 1.5 to 4.9%) and left out of the circuit table: Imola
+  2021, Monaco 2022, Singapore 2022, Canada 2024, Australia 2025, Silverstone
+  2025 and Brazil 2026, plus Monaco 2024 (dry; its red-flag restart and slow
+  tyre-saving laps spread the times).
+- **Wear that looks negative** (14 of 126 dry races, among them Canada and
+  Las Vegas 2026) means laps got faster with tyre age beyond the lap-count
+  term: graining clearing or the track rubbering in, not wear. The strategy
+  model turns such a curve into no wear rather than tyres improving.
+- **Qatar** varies too much to rely on: four races range from -1.2 s (2024,
+  many stops and safety cars) to +0.7 s, and 2025 had a 25-lap stint limit.
 
 Each team's race pace and tyre wear against the field are also measured
 (`team_race_pace`). 2026 so far, mean gap to the median team at a 12-lap-old
 tyre: Mercedes -1.6%, Ferrari -1.4%, McLaren -1.2%, Red Bull -1.1%, the
 midfield within 0.7%, Aston Martin +1.8% and Cadillac +2.0%. Team wear
-differences are small (within 0.01 s/lap for all but Cadillac). As features
-(`RACE_PACE_COLUMNS`, earlier races only) they are not in the model; testing
-them needs 2018-2023 lap data, which is being downloaded.
+differences are small (within 0.01 s/lap for all but Cadillac).
+
+**As race-model features (tested, not adopted).** Each team's race pace and
+wear in earlier races (`RACE_PACE_COLUMNS`, exponentially weighted, wet races
+skipped) were tested on 2022-2025 (92 races) with 2026 left untouched:
+
+| | Current model | With race pace |
+|---|---:|---:|
+| Winner log loss | 1.071 | 1.072 |
+| Winner accuracy | 60.9% | 60.9% |
+
+Log-loss difference +0.0006, 95% interval -0.010 to +0.011: no gain. Grid,
+qualifying pace and points form already carry what a team's recent race pace
+says about who wins. Reproduce with `python scripts/compare_features.py --set
+race_pace --first-season 2022 --last-season 2025`.
 
 ## Forecasts
 

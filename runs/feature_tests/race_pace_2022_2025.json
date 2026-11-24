@@ -1,0 +1,44 @@
+{
+  "extra_columns": [
+    "team_race_pace_form",
+    "team_race_deg_form"
+  ],
+  "seasons": [
+    2022,
+    2025
+  ],
+  "races": 92,
+  "current": {
+    "log_loss": 1.0710629445542528,
+    "winner_accuracy": 0.6086956521739131
+  },
+  "with_extra": {
+    "log_loss": 1.0716848692441079,
+    "winner_accuracy": 0.6086956521739131
+  },
+  "log_loss_difference": {
+    "mean_difference": 0.0006219246898552314,
+    "ci95_low": -0.009811323639378755,
+    "ci95_high": 0.011342018995615386,
+    "probability_model_better": 0.4552
+  },
+  "by_season_log_loss": {
+    "2022": {
+      "current": 1.2391771806652514,
+      "with_extra": 1.2485934560683112
+    },
+    "2023": {
+      "current": 0.3941728670466107,
+      "with_extra": 0.40368303095555313
+    },
+    "2024": {
+      "current": 1.5976981611549885,
+      "with_extra": 1.5818779468225328
+    },
+    "2025": {
+      "current": 1.0108055825671067,
+      "with_extra": 1.0116606055080057
+    }
+  },
+  "verdict": "no measurable gain"
+}

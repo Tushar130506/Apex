@@ -1,27 +1,31 @@
 circuit,track,races,progress_s_per_lap,deg_s_per_lap,deg_quad_s_per_lap2,deg_at_20_laps_s,deg_at_20_laps_range,pit_stops_per_race
-bahrain,Bahrain Grand Prix,2,-0.0706,0.1071,0.0004,2.2986,2.21 to 2.39,42.5000
+suzuka,Japanese Grand Prix,5,-0.0776,0.1387,-0.0009,2.4095,0.63 to 5.85,37.8000
+bahrain,Bahrain Grand Prix,5,-0.0759,0.1163,0.0002,2.3880,1.95 to 3.30,46.6000
 sepang,Bahrain Grand Prix in Malaysia,1,-0.0642,0.1329,-0.0020,1.8771,1.88 to 1.88,73.0000
-catalunya,Barcelona Grand Prix,3,-0.0601,0.0987,-0.0006,1.7491,1.62 to 3.07,48.0000
-silverstone,British Grand Prix,2,-0.0591,0.0244,0.0023,1.3909,1.33 to 1.45,48.0000
-spa,Belgian Grand Prix,3,-0.1031,0.1004,-0.0016,1.3886,0.41 to 1.67,29.3333
-red_bull_ring,Austrian Grand Prix,3,-0.0337,0.0346,0.0016,1.3437,1.02 to 1.55,39.3333
-imola,Emilia Romagna Grand Prix,2,-0.0423,0.0883,-0.0011,1.3303,1.21 to 1.45,32.0000
-hungaroring,Hungarian Grand Prix,3,-0.0506,0.0579,0.0004,1.3278,1.15 to 1.39,38.0000
-yas_marina,Abu Dhabi Grand Prix,2,-0.0527,0.0772,-0.0007,1.2766,1.07 to 1.48,27.5000
+catalunya,Barcelona Grand Prix,6,-0.0577,0.1028,-0.0009,1.6832,0.83 to 3.07,46.1667
+spa,Belgian Grand Prix,5,-0.1031,0.1316,-0.0024,1.6744,0.41 to 3.65,32.6000
+ricard,French Grand Prix,2,-0.0656,0.0930,-0.0012,1.3903,1.31 to 1.47,23.5000
+hungaroring,Hungarian Grand Prix,6,-0.0502,0.0610,0.0002,1.2838,0.11 to 1.39,40.6667
+yas_marina,Abu Dhabi Grand Prix,5,-0.0541,0.0650,-0.0001,1.2761,0.07 to 1.48,30.4000
+imola,Emilia Romagna Grand Prix,3,-0.0498,0.0696,-0.0004,1.2129,-0.85 to 1.45,29.6667
 shanghai,Chinese Grand Prix,3,-0.0735,0.0830,-0.0012,1.1858,0.40 to 2.74,28.0000
-zandvoort,Dutch Grand Prix,3,-0.0434,0.0603,-0.0004,1.0427,0.76 to 1.21,43.6667
-rodriguez,Mexico City Grand Prix,3,-0.0460,0.0529,-0.0004,0.9073,0.67 to 1.33,35.3333
-suzuka,Japanese Grand Prix,3,-0.0776,0.0442,-0.0000,0.8765,0.63 to 2.76,34.6667
-jeddah,Saudi Arabian Grand Prix,2,-0.0695,0.0567,-0.0008,0.8114,0.78 to 0.84,19.0000
-albert_park,Australian Grand Prix,2,-0.0522,0.0225,0.0007,0.7350,0.70 to 0.77,34.0000
-marina_bay,Singapore Grand Prix,3,-0.0473,0.0282,0.0004,0.7275,0.47 to 0.87,23.6667
-monaco,Monaco Grand Prix,2,-0.0318,0.0332,0.0001,0.7060,0.03 to 1.38,63.0000
-miami,Miami Grand Prix,3,-0.0542,0.0312,0.0002,0.6904,0.58 to 1.14,22.6667
-americas,United States Grand Prix,3,-0.0645,0.0363,-0.0001,0.6749,0.63 to 1.47,25.3333
-vegas,Las Vegas Grand Prix,3,-0.0759,0.0270,-0.0000,0.5373,-1.21 to 1.38,28.3333
-baku,Azerbaijan Grand Prix,3,-0.0683,0.0210,-0.0002,0.3363,-0.33 to 1.17,26.3333
-monza,Italian Grand Prix,3,-0.0612,0.0076,0.0002,0.2404,0.23 to 0.95,26.3333
-villeneuve,Canadian Grand Prix,2,-0.0391,-0.0272,0.0010,-0.1605,-1.02 to 0.70,58.0000
-interlagos,São Paulo Grand Prix,2,-0.0282,-0.0157,0.0001,-0.2587,-1.90 to 1.38,36.0000
-losail,Qatar Grand Prix,2,-0.0741,-0.0382,0.0012,-0.3012,-1.24 to 0.63,50.5000
+americas,United States Grand Prix,6,-0.0655,0.0390,0.0010,1.1742,0.63 to 1.57,31.5000
+red_bull_ring,Austrian Grand Prix,7,-0.0388,0.0516,0.0003,1.1637,0.25 to 1.55,39.1429
+interlagos,São Paulo Grand Prix,5,-0.0417,0.0420,0.0006,1.0930,-1.90 to 1.38,52.4000
+zandvoort,Dutch Grand Prix,6,-0.0445,0.0499,-0.0002,0.9009,0.27 to 1.21,55.5000
+monza,Italian Grand Prix,6,-0.0456,0.0450,-0.0000,0.8975,0.23 to 1.03,25.6667
+rodriguez,Mexico City Grand Prix,6,-0.0394,0.0488,-0.0004,0.8031,0.51 to 1.33,32.0000
+sochi,Russian Grand Prix,1,-0.0857,0.0383,-0.0001,0.7152,0.72 to 0.72,39.0000
+albert_park,Australian Grand Prix,4,-0.0602,0.0233,0.0006,0.6992,0.16 to 0.77,38.7500
+marina_bay,Singapore Grand Prix,4,-0.0474,0.0038,0.0013,0.5974,0.20 to 0.87,24.0000
+miami,Miami Grand Prix,5,-0.0542,0.0368,-0.0004,0.5789,-0.11 to 1.14,22.6000
+villeneuve,Canadian Grand Prix,4,-0.0386,0.0245,0.0001,0.5337,-1.02 to 0.70,45.2500
+silverstone,British Grand Prix,5,-0.0602,0.0319,-0.0004,0.4799,0.12 to 1.45,41.6000
+baku,Azerbaijan Grand Prix,6,-0.0698,0.0254,-0.0002,0.4225,-0.63 to 1.17,31.3333
+losail,Qatar Grand Prix,4,-0.0871,-0.0045,0.0011,0.3529,-1.24 to 0.67,46.2500
+vegas,Las Vegas Grand Prix,4,-0.0797,-0.0182,0.0015,0.2387,-1.21 to 1.38,29.0000
+monaco,Monaco Grand Prix,4,-0.0357,-0.0048,0.0008,0.2123,0.03 to 1.38,45.5000
+jeddah,Saudi Arabian Grand Prix,5,-0.0657,-0.0039,0.0003,0.0354,-0.61 to 0.84,25.6000
+portimao,Portuguese Grand Prix,1,-0.0387,-0.0141,0.0004,-0.1072,-0.11 to -0.11,60.0000
 madring,Spanish Grand Prix,1,-0.0835,-0.0600,0.0015,-0.6023,-0.60 to -0.60,25.0000
+istanbul,Turkish Grand Prix,1,-0.0359,-0.1554,0.0038,-1.5830,-1.58 to -1.58,20.0000

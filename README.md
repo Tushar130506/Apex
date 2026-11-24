@@ -80,8 +80,9 @@ python scripts/compare_features.py --set temperature
 ```
 
 It refits both models before every 2021-2025 race and reports the log-loss
-difference with a bootstrap interval. The temperature features gave no
-measurable gain, so they are not in the model.
+difference with a bootstrap interval. The temperature features and the
+race-pace features (`--set race_pace`, each team's race pace and tyre wear in
+earlier races) gave no measurable gain, so they are not in the model.
 
 ### Fuel, track and tyre wear from race laps
 
@@ -94,7 +95,7 @@ laps get per lap run (fuel burn plus track grip) and how much time a tyre
 loses with age, per race, per circuit (dry races only) and per team. The
 first run downloads about 14 pages per race at the API's rate limit (2024-2026
 takes about three hours) into `data/raw/jolpica/`; later runs read the cache.
-Results for 2024-2026 are in `runs/race_pace/` and `RACE_MODEL_REPORT.md`.
+Results for 2021-2026 are in `runs/race_pace/` and `RACE_MODEL_REPORT.md`.
 `ParametricPace.for_circuit("runs/race_pace/circuits.csv", "bahrain")` gives
 the strategy simulator that circuit's measured numbers.
 
