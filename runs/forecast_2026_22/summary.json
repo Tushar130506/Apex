@@ -4,7 +4,7 @@
   "forecast_mode": "pre-weekend",
   "trained_on_races": 194,
   "trained_through_race": 202621,
-  "win_temperature": 0.868294116627253,
+  "win_temperature": 0.8725962353165638,
   "predicted_winner": "VER",
-  "predicted_winner_probability": 0.46348689428509066
+  "predicted_winner_probability": 0.40135776888774444
 }

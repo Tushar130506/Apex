@@ -6,8 +6,8 @@
 Lap timing needs an F1TV account, official results do not. When a race has
 results but no processed laps, this writes ``data/manual/<race_id>.csv`` in the
 format ``predict_race.py`` and ``forecast_season.py`` take as
-``--extra-results``. Such races feed prior-race form only; their practice and
-qualifying pace columns stay empty.
+``--extra-results``. Such races feed prior-race form only; their practice pace
+stays empty, and so does qualifying pace unless ``--with-qualifying`` adds it.
 """
 from __future__ import annotations
 
@@ -34,13 +34,34 @@ def missing_races(results: pd.DataFrame, table: pd.DataFrame) -> pd.DataFrame:
     return rows[COLUMNS]
 
 
+def add_qualifying(rows: pd.DataFrame) -> pd.DataFrame:
+    """Join each race's qualifying best laps, so its pace counts in later form."""
+    from apex.ingestion.jolpica import qualifying
+
+    frames = []
+    for race_id in rows["race_id"].unique():
+        season, round_number = (int(part) for part in str(race_id).split("_"))
+        frames.append(qualifying(season, round_number))
+    times = pd.concat(frames, ignore_index=True)
+    if times.empty:
+        return rows.assign(qualifying_best_lap_s=float("nan"))
+    return rows.merge(
+        times[["race_id", "driver", "qualifying_best_lap_s"]], on=["race_id", "driver"], how="left",
+        validate="one_to_one",
+    )
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--results", required=True, help="parquet from scripts/build_race_results.py")
     parser.add_argument("--features", default="runs/walk_forward_championship/input_features.parquet")
     parser.add_argument("--out", default="data/manual")
+    parser.add_argument("--with-qualifying", action="store_true",
+                        help="add qualifying_best_lap_s from the Jolpica API (needs network)")
     args = parser.parse_args()
     rows = missing_races(pd.read_parquet(args.results), pd.read_parquet(args.features))
+    if args.with_qualifying and not rows.empty:
+        rows = add_qualifying(rows)
     output = Path(args.out)
     output.mkdir(parents=True, exist_ok=True)
     for race_id, group in rows.groupby("race_id", sort=False):

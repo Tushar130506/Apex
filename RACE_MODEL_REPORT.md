@@ -150,9 +150,9 @@ with `python scripts/compare_features.py --set temperature`.
 
 Updated 22 November 2026. The feature table ends at round 19 (Mexico City).
 Rounds 20 (São Paulo) and 21 (Las Vegas) are added from their official
-classifications through `--extra-results`, so they feed prior-race form but
-have no practice or qualifying pace. Lap timing now needs an F1TV account, so
-no laps were processed for them.
+classifications and qualifying times (Jolpica API) through `--extra-results`,
+so they feed prior-race form and qualifying pace but no practice pace. Lap
+timing from FastF1 now needs an F1TV account, so no laps were processed.
 
 How the pre-weekend (form-only) forecasts did:
 
@@ -161,11 +161,16 @@ How the pre-weekend (form-only) forecasts did:
 | 20, São Paulo | VER 35.8%, ANT 25.2%, LEC 10.7% (NOR 5.6%) | NOR, VER, HAD |
 | 21, Las Vegas | VER 30.1%, ANT 22.0%, NOR 12.2% | VER, NOR, PIA |
 
+Replayed after qualifying (actual grid and qualifying times, data through
+round 20), the Las Vegas forecast becomes VER 70.8%, RUS 11.5%, ANT 9.7%
+(Antonelli took pole but started sixth after a penalty). Forecasts made after
+qualifying are the model's evaluated mode; pre-weekend ones are much weaker.
+
 Round 22, Qatar (pre-weekend, form only, data through round 21):
 
 | | 1st | 2nd | 3rd | 4th | 5th |
 |---|---|---|---|---|---|
-| Win probability | VER 46.3% | ANT 13.9% | NOR 12.5% | RUS 7.3% | LEC 6.2% |
+| Win probability | VER 40.1% | NOR 15.5% | ANT 15.3% | RUS 8.3% | LEC 6.6% |
 
 Championship after round 21, sprints included (the six 2026 sprints are in
 `data/manual/sprint_results_2026.csv`), two races left and no sprints
@@ -182,7 +187,7 @@ remaining:
 
 Both titles are settled (`title_status` clinched for Antonelli and Mercedes).
 Verstappen finishes second in every simulation; third place is open between
-Norris (35%), Russell (31%) and Hamilton (29%). Points are derived from
+Norris (41%), Russell (30%) and Hamilton (25%). Points are derived from
 classified positions, so check them against the official standings before
 quoting them.
 
@@ -194,7 +199,8 @@ To refresh after a race, or after qualifying:
 
 ```bash
 python scripts/build_race_results.py 2026 --out data/processed/race_results_2026.parquet
-python scripts/export_extra_results.py --results data/processed/race_results_2026.parquet
+python scripts/export_extra_results.py --results data/processed/race_results_2026.parquet --with-qualifying
+python scripts/fetch_weekend.py --race-id 2026_22          # after qualifying; add --grid ANT=6 for penalties
 python scripts/predict_race.py --race-id 2026_22 --track "Qatar Grand Prix" \
     --extra-results data/manual/2026_20.csv data/manual/2026_21.csv \
     --entries data/manual/2026_22_grid.csv

@@ -48,6 +48,11 @@ python scripts/walk_forward_championship.py
 ```
 
 ```bash
+# After qualifying: entry list with grid and qualifying times (no account needed)
+python scripts/fetch_weekend.py --race-id 2026_22
+```
+
+```bash
 # Forecast a race that has not been run (add --entries grid.csv after qualifying)
 python scripts/predict_race.py --race-id 2026_21 --track "Las Vegas Grand Prix"
 ```

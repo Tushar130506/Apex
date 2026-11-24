@@ -1,23 +1,23 @@
-race_id,track,driver,team,grid_position,finish_position,status
-2026_21,Las Vegas Grand Prix,VER,Red Bull Racing,1.0,1.0,Finished
-2026_21,Las Vegas Grand Prix,NOR,McLaren,3.0,2.0,Finished
-2026_21,Las Vegas Grand Prix,PIA,McLaren,17.0,3.0,Finished
-2026_21,Las Vegas Grand Prix,ANT,Mercedes,6.0,4.0,Finished
-2026_21,Las Vegas Grand Prix,GAS,Alpine,8.0,5.0,Finished
-2026_21,Las Vegas Grand Prix,COL,Alpine,9.0,6.0,Finished
-2026_21,Las Vegas Grand Prix,HAM,Ferrari,11.0,7.0,Finished
-2026_21,Las Vegas Grand Prix,SAI,Williams,20.0,8.0,Finished
-2026_21,Las Vegas Grand Prix,RUS,Mercedes,2.0,9.0,Finished
-2026_21,Las Vegas Grand Prix,LEC,Ferrari,10.0,10.0,Finished
-2026_21,Las Vegas Grand Prix,HUL,Audi,12.0,11.0,Finished
-2026_21,Las Vegas Grand Prix,BOR,Audi,13.0,12.0,Finished
-2026_21,Las Vegas Grand Prix,BEA,Haas F1 Team,22.0,13.0,Finished
-2026_21,Las Vegas Grand Prix,LAW,Racing Bulls,7.0,14.0,Finished
-2026_21,Las Vegas Grand Prix,HAD,Red Bull Racing,4.0,15.0,Finished
-2026_21,Las Vegas Grand Prix,CAM,Haas F1 Team,15.0,16.0,Finished
-2026_21,Las Vegas Grand Prix,STR,Aston Martin,21.0,17.0,Finished
-2026_21,Las Vegas Grand Prix,BOT,Cadillac,19.0,18.0,Finished
-2026_21,Las Vegas Grand Prix,ALO,Aston Martin,18.0,19.0,Retired
-2026_21,Las Vegas Grand Prix,LIN,Racing Bulls,5.0,20.0,Retired
-2026_21,Las Vegas Grand Prix,PER,Cadillac,16.0,21.0,Retired
-2026_21,Las Vegas Grand Prix,ALB,Williams,14.0,22.0,Did not start
+race_id,track,driver,team,grid_position,finish_position,status,qualifying_best_lap_s
+2026_21,Las Vegas Grand Prix,VER,Red Bull Racing,1.0,1.0,Finished,94.151
+2026_21,Las Vegas Grand Prix,NOR,McLaren,3.0,2.0,Finished,94.244
+2026_21,Las Vegas Grand Prix,PIA,McLaren,17.0,3.0,Finished,94.763
+2026_21,Las Vegas Grand Prix,ANT,Mercedes,6.0,4.0,Finished,93.893
+2026_21,Las Vegas Grand Prix,GAS,Alpine,8.0,5.0,Finished,94.559
+2026_21,Las Vegas Grand Prix,COL,Alpine,9.0,6.0,Finished,94.982
+2026_21,Las Vegas Grand Prix,HAM,Ferrari,11.0,7.0,Finished,95.253
+2026_21,Las Vegas Grand Prix,SAI,Williams,20.0,8.0,Finished,95.588
+2026_21,Las Vegas Grand Prix,RUS,Mercedes,2.0,9.0,Finished,94.224
+2026_21,Las Vegas Grand Prix,LEC,Ferrari,10.0,10.0,Finished,95.04
+2026_21,Las Vegas Grand Prix,HUL,Audi,12.0,11.0,Finished,95.46
+2026_21,Las Vegas Grand Prix,BOR,Audi,13.0,12.0,Finished,95.993
+2026_21,Las Vegas Grand Prix,BEA,Haas F1 Team,22.0,13.0,Finished,108.005
+2026_21,Las Vegas Grand Prix,LAW,Racing Bulls,7.0,14.0,Finished,95.048
+2026_21,Las Vegas Grand Prix,HAD,Red Bull Racing,4.0,15.0,Finished,94.592
+2026_21,Las Vegas Grand Prix,CAM,Haas F1 Team,15.0,16.0,Finished,96.22
+2026_21,Las Vegas Grand Prix,STR,Aston Martin,21.0,17.0,Finished,97.55
+2026_21,Las Vegas Grand Prix,BOT,Cadillac,19.0,18.0,Finished,97.601
+2026_21,Las Vegas Grand Prix,ALO,Aston Martin,18.0,19.0,Retired,97.4
+2026_21,Las Vegas Grand Prix,LIN,Racing Bulls,5.0,20.0,Retired,94.668
+2026_21,Las Vegas Grand Prix,PER,Cadillac,16.0,21.0,Retired,97.383
+2026_21,Las Vegas Grand Prix,ALB,Williams,14.0,22.0,Did not start,95.856
