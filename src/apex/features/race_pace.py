@@ -10,6 +10,10 @@ F1TV account. What that data cannot give:
   per circuit, ``progress_s_per_lap`` (negative = faster each lap).
 - **Track status.** Safety-car and red-flag laps are found from the data:
   a lap where the whole field is slow is dropped for everyone.
+- **Weather.** A wet or drying race makes every lap faster as the track
+  dries, which no fuel burn explains. Such races are flagged by the spread
+  of the field's lap times (``field_spread``) and should be left out of
+  circuit averages.
 
 Model, fitted per race on clean laps with one intercept per driver::
 
@@ -27,6 +31,7 @@ NEUTRALISED_RATIO = 1.07   # field median this much slower than usual -> safety 
 OUTLIER_RATIO = 1.05       # a driver's lap this much slower than their own usual -> traffic or incident
 MIN_CLEAN_LAPS = 150       # per race, across all drivers
 MIN_DRIVERS = 8
+MIXED_SPREAD = 1.06        # field_spread above this -> wet or drying race (dry races: 1.015-1.05)
 
 
 def clean_race_laps(laps: pd.DataFrame, pit_stops: pd.DataFrame) -> pd.DataFrame:
@@ -67,6 +72,16 @@ def clean_race_laps(laps: pd.DataFrame, pit_stops: pd.DataFrame) -> pd.DataFrame
     frame["exclusion_reason"] = reason
     frame["valid"] = reason.isna()
     return frame
+
+
+def field_spread(cleaned: pd.DataFrame) -> float:
+    """95th over 5th percentile of the field's median clean lap, lap by lap.
+
+    About 1.02-1.05 in a dry race (fuel burn and tyres); a drying track
+    pushes it well past that.
+    """
+    field = cleaned[cleaned["valid"]].groupby("lap_no")["lap_time_s"].median()
+    return float(field.quantile(0.95) / field.quantile(0.05))
 
 
 def _design(clean: pd.DataFrame) -> tuple[np.ndarray, np.ndarray, list[str]]:
@@ -117,6 +132,7 @@ def fit_race_pace(cleaned: pd.DataFrame, *, bootstrap: int = 200, seed: int = 0)
     loss20 = deg * 20 + deg2 * 400
     draw_loss20 = draws[:, 1] * 20 + draws[:, 2] * 400
     pace = pd.Series(beta[:k], index=names)
+    spread = field_spread(cleaned)
     return {
         "race_id": str(clean["race_id"].iloc[0]),
         "clean_laps": int(len(clean)),
@@ -127,8 +143,81 @@ def fit_race_pace(cleaned: pd.DataFrame, *, bootstrap: int = 200, seed: int = 0)
         "deg_quad_s_per_lap2": float(deg2),
         "deg_at_20_laps_s": float(loss20),
         "deg_at_20_laps_ci95": [float(np.quantile(draw_loss20, 0.025)), float(np.quantile(draw_loss20, 0.975))],
+        "field_spread": spread,
+        "mixed_conditions": bool(spread > MIXED_SPREAD),
         "driver_pace_gap_s": (pace - pace.min()).round(3).to_dict(),
     }
 
 
-__all__ = ["clean_race_laps", "fit_race_pace"]
+TYPICAL_TYRE_AGE = 12   # laps; team pace is compared at this tyre age
+
+
+def team_race_pace(cleaned: pd.DataFrame) -> pd.DataFrame:
+    """Each team's race pace and tyre wear against the field, for one race.
+
+    Fits driver intercepts, the common progress term and one linear
+    tyre-age slope per team. ``pace_gap_pct`` is the team's mean driver pace
+    at a 12-lap-old tyre against the field median, in percent of a lap
+    (positive = slower). ``deg_rel_s_per_lap`` is the team's slope minus the
+    median team's (positive = wears its tyres faster). Needs a ``team`` column.
+    """
+    clean = cleaned[cleaned["valid"]]
+    drivers = sorted(clean["driver"].unique())
+    teams = sorted(clean["team"].dropna().unique())
+    if len(clean) < MIN_CLEAN_LAPS or len(drivers) < MIN_DRIVERS:
+        raise ValueError(f"too few clean laps ({len(clean)}) or drivers ({len(drivers)})")
+    driver = clean["driver"].to_numpy()
+    team = clean["team"].to_numpy()
+    age = clean["tyre_age"].to_numpy(float)
+    x = np.column_stack([
+        (driver[:, None] == np.array(drivers)[None, :]).astype(float),
+        clean["lap_no"].to_numpy(float),
+        (team[:, None] == np.array(teams)[None, :]) * age[:, None],
+    ])
+    beta = _solve(x, clean["lap_time_s"].to_numpy(float))
+    k = len(drivers)
+    slope = pd.Series(beta[k + 1:], index=teams)
+    team_of = clean.drop_duplicates("driver").set_index("driver")["team"]
+    pace = pd.Series(beta[:k], index=drivers) + team_of.reindex(drivers).map(slope).fillna(0) * TYPICAL_TYRE_AGE
+    team_pace = pace.groupby(team_of.reindex(drivers)).mean()
+    typical = float(clean["lap_time_s"].median())
+    laps = clean.groupby("team").size()
+    return pd.DataFrame({
+        "race_id": str(clean["race_id"].iloc[0]),
+        "team": teams,
+        "pace_gap_pct": ((team_pace - team_pace.median()) / typical * 100).reindex(teams).to_numpy(),
+        "deg_rel_s_per_lap": (slope - slope.median()).reindex(teams).to_numpy(),
+        "clean_laps": laps.reindex(teams).fillna(0).astype(int).to_numpy(),
+    })
+
+
+def circuit_table(races: pd.DataFrame) -> pd.DataFrame:
+    """One row per circuit from dry races: median progress and degradation.
+
+    The degradation coefficients are those of the race with the median
+    20-lap loss (the mean of the middle two for an even count), so the
+    linear and quadratic terms stay consistent with each other.
+    """
+    dry = races[~races["mixed_conditions"].astype(bool)]
+    rows = []
+    for circuit, group in dry.groupby("circuit"):
+        ordered = group.sort_values("deg_at_20_laps_s")
+        n = len(ordered)
+        middle = ordered.iloc[[(n - 1) // 2, n // 2]]
+        rows.append({
+            "circuit": circuit,
+            "track": group["track"].iloc[-1],
+            "races": n,
+            "progress_s_per_lap": float(group["progress_s_per_lap"].median()),
+            "deg_s_per_lap": float(middle["deg_s_per_lap"].mean()),
+            "deg_quad_s_per_lap2": float(middle["deg_quad_s_per_lap2"].mean()),
+            "deg_at_20_laps_s": float(middle["deg_at_20_laps_s"].mean()),
+            "deg_at_20_laps_range": f"{group['deg_at_20_laps_s'].min():.2f} to {group['deg_at_20_laps_s'].max():.2f}",
+            "pit_stops_per_race": float(group["pit_stops"].mean()),
+        })
+    columns = ["circuit", "track", "races", "progress_s_per_lap", "deg_s_per_lap", "deg_quad_s_per_lap2",
+               "deg_at_20_laps_s", "deg_at_20_laps_range", "pit_stops_per_race"]
+    return pd.DataFrame(rows, columns=columns).sort_values("deg_at_20_laps_s", ascending=False)
+
+
+__all__ = ["circuit_table", "clean_race_laps", "field_spread", "fit_race_pace", "team_race_pace"]

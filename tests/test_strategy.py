@@ -51,3 +51,10 @@ def test_pace_model_from_measured_race_pace(tmp_path):
     assert loaded.deg["MEDIUM"] == pytest.approx(0.08) and loaded.fit_provenance == "race_pace:losail:2races"
     with pytest.raises(KeyError):
         ParametricPace.for_circuit(str(path), "monaco")
+
+
+def test_dipping_degradation_curve_becomes_a_floored_line():
+    dipping = ParametricPace.from_race_pace(-0.05, -0.1, 0.008)     # 1.2 s lost at 20 laps
+    assert dipping.deg["MEDIUM"] == pytest.approx(0.06) and dipping.deg_quad["MEDIUM"] == 0
+    improving = ParametricPace.from_race_pace(-0.05, -0.1, 0.002)   # faster with age
+    assert improving.deg["MEDIUM"] == 0 and improving.deg_quad["MEDIUM"] == 0

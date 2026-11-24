@@ -177,7 +177,7 @@ def pit_stop_table(pits_race: dict, codes: dict[str, str]) -> pd.DataFrame:
 
 
 def race_laps(season: int, round_number: int) -> tuple[pd.DataFrame, pd.DataFrame]:
-    """Race lap times and pit stops for one round, with three-letter driver codes."""
+    """Race lap times (with each driver's team) and pit stops for one round."""
     results = races(f"{season}/{round_number}/results")
     if not results:
         raise ValueError(f"no classification for {season} round {round_number}")
@@ -185,6 +185,10 @@ def race_laps(season: int, round_number: int) -> tuple[pd.DataFrame, pd.DataFram
     laps = races(f"{season}/{round_number}/laps")
     pits = races(f"{season}/{round_number}/pitstops")
     lap_frame = lap_table(laps[0], codes) if laps else pd.DataFrame()
+    if not lap_frame.empty:
+        teams = {code: row["Constructor"]["name"] for row in results[0].get("Results", [])
+                 for code in [codes[row["Driver"]["driverId"]]]}
+        lap_frame["team"] = canonical_team(lap_frame["driver"].map(teams))
     pit_frame = pit_stop_table(pits[0], codes) if pits else pit_stop_table({}, codes)
     return lap_frame, pit_frame
 

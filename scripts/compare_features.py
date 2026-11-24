@@ -3,6 +3,7 @@
 
   python scripts/compare_features.py --set temperature
   python scripts/compare_features.py --columns track_temp_z --first-season 2021 --last-season 2025
+  python scripts/compare_features.py --set race_pace   # needs runs/race_pace/teams.csv
 
 Both models are refitted before every race on earlier races only, exactly as
 in ``evaluate_race_model.py``. Choose features on 2021-2025 and look at 2026
@@ -23,14 +24,16 @@ import pandas as pd
 sys.path.insert(0, "src")
 from apex.features.form_features import (
     ORDER_MODEL_COLUMNS,
+    RACE_PACE_COLUMNS,
     TEMPERATURE_COLUMNS,
+    add_race_pace_form,
     build_order_features,
     race_order,
 )
 from apex.models.race_order import paired_bootstrap, walk_forward_order
 from apex.models.walk_forward import MIN_TRAINING_RACES
 
-FEATURE_SETS = {"temperature": TEMPERATURE_COLUMNS}
+FEATURE_SETS = {"temperature": TEMPERATURE_COLUMNS, "race_pace": RACE_PACE_COLUMNS}
 
 
 def per_race(predictions: pd.DataFrame) -> pd.DataFrame:
@@ -56,11 +59,15 @@ def main() -> None:
     parser.add_argument("--first-season", type=int, default=2021)
     parser.add_argument("--last-season", type=int, default=2025)
     parser.add_argument("--seed", type=int, default=0)
+    parser.add_argument("--race-pace", default="runs/race_pace/teams.csv",
+                        help="team race-pace table from race_pace_study.py (for the race_pace set)")
     parser.add_argument("--out", default=None, help="optional JSON file for the result")
     args = parser.parse_args()
 
     extra = list(FEATURE_SETS[args.set]) if args.set else list(args.columns)
     features = build_order_features(pd.read_parquet(args.features))
+    if set(extra) & set(RACE_PACE_COLUMNS):
+        features = add_race_pace_form(features, pd.read_csv(args.race_pace))
     unknown = set(extra) - set(features.columns)
     if unknown:
         parser.error(f"unknown columns: {sorted(unknown)}")

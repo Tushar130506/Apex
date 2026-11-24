@@ -91,6 +91,12 @@ TEMPERATURE_COLUMNS = [
     "driver_heat_effect",
     "team_heat_effect",
 ]
+# Each team's race pace and tyre wear measured from earlier races' lap times
+# (``apex.features.race_pace.team_race_pace``). Experimental, like the above.
+RACE_PACE_COLUMNS = [
+    "team_race_pace_form",
+    "team_race_deg_form",
+]
 # Fixed scale for practice track temperature (degrees C), roughly the
 # 2018-2025 mean and spread; a scale, not a fitted parameter.
 TRACK_TEMP_CENTRE = 36.0
@@ -355,6 +361,34 @@ def _add_temperature_features(frame: pd.DataFrame, team_race: pd.DataFrame) -> N
         on=["race_id", "team_canonical"], how="left", validate="many_to_one",
     )["_team_slope"].to_numpy()
     frame["team_heat_effect"] = slope * frame["track_temp_z"]
+
+
+def add_race_pace_form(features: pd.DataFrame, team_pace: pd.DataFrame) -> pd.DataFrame:
+    """Add :data:`RACE_PACE_COLUMNS` from per-race team measurements.
+
+    ``team_pace``: race_id, team, pace_gap_pct, deg_rel_s_per_lap and
+    optionally mixed_conditions (those races are skipped). Each row gets the
+    exponentially weighted mean of its team's earlier races only, so a race
+    never sees its own lap times. Teams or eras without measurements get NaN.
+    """
+    measured = team_pace
+    if "mixed_conditions" in measured:
+        measured = measured[~measured["mixed_conditions"].astype(bool)]
+    measured = measured.assign(team_canonical=canonical_team(measured["team"]))[
+        ["race_id", "team_canonical", "pace_gap_pct", "deg_rel_s_per_lap"]
+    ]
+    frame = features.copy()
+    frame["team_canonical"] = canonical_team(frame["team"]) if "team_canonical" not in frame else frame["team_canonical"]
+    keys = frame[["race_id", "team_canonical"]].dropna().drop_duplicates()
+    combined = keys.merge(measured, on=["race_id", "team_canonical"], how="outer")
+    combined["_order"] = race_order(combined["race_id"])
+    combined = combined.sort_values("_order").reset_index(drop=True)
+    for value, column in (("pace_gap_pct", "team_race_pace_form"), ("deg_rel_s_per_lap", "team_race_deg_form")):
+        combined[column] = _prior_ewm(combined, "team_canonical", value, FAST_HALFLIFE)
+    return frame.merge(
+        combined[["race_id", "team_canonical", *RACE_PACE_COLUMNS]],
+        on=["race_id", "team_canonical"], how="left", validate="many_to_one",
+    ).set_axis(frame.index)
 
 
 def results_table(table: pd.DataFrame) -> pd.DataFrame:

@@ -69,8 +69,14 @@ class ParametricPace:
         if burn_kg_per_lap <= 0:
             raise ValueError("burn_kg_per_lap must be positive")
         base = cls()
-        scale = max(deg_s_per_lap, 0.0) / base.deg["MEDIUM"]
-        quad_scale = max(deg_quad_s_per_lap2, 0.0) / base.deg_quad["MEDIUM"]
+        if deg_s_per_lap < 0 or deg_quad_s_per_lap2 < 0:
+            # A curve that dips (graining clearing, track rubbering in) is
+            # replaced by the straight line with the same 20-lap loss,
+            # floored at no degradation.
+            deg_s_per_lap = max(deg_s_per_lap * 20 + deg_quad_s_per_lap2 * 400, 0.0) / 20
+            deg_quad_s_per_lap2 = 0.0
+        scale = deg_s_per_lap / base.deg["MEDIUM"]
+        quad_scale = deg_quad_s_per_lap2 / base.deg_quad["MEDIUM"]
         return cls(
             offset=dict(base.offset),
             deg={compound: value * scale for compound, value in base.deg.items()},

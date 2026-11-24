@@ -7,7 +7,8 @@ Uses official lap times and pit stops from the Jolpica API (no account). The
 first run downloads about 13 pages per race at the service's rate limit
 (roughly 500 requests an hour) and caches them in data/raw/jolpica, so
 later runs are instant. Writes runs/race_pace/races.csv (one row per race)
-and runs/race_pace/circuits.csv (median per circuit).
+runs/race_pace/circuits.csv (median per circuit, dry races only) and
+runs/race_pace/teams.csv (each team's pace and tyre wear against the field).
 """
 from __future__ import annotations
 
@@ -19,7 +20,7 @@ import sys
 import pandas as pd
 
 sys.path.insert(0, "src")
-from apex.features.race_pace import clean_race_laps, fit_race_pace
+from apex.features.race_pace import circuit_table, clean_race_laps, fit_race_pace, team_race_pace
 from apex.ingestion.jolpica import race_laps, races
 
 
@@ -29,7 +30,7 @@ def main() -> None:
     parser.add_argument("--out", default="runs/race_pace")
     parser.add_argument("--bootstrap", type=int, default=200)
     args = parser.parse_args()
-    rows, skipped = [], []
+    rows, team_rows, skipped = [], [], []
     for season in args.seasons:
         for race in races(f"{season}"):
             round_number = int(race["round"])
@@ -38,9 +39,11 @@ def main() -> None:
                 laps, pits = race_laps(season, round_number)
                 cleaned = clean_race_laps(laps, pits)
                 result = fit_race_pace(cleaned, bootstrap=args.bootstrap)
+                teams = team_race_pace(cleaned).assign(mixed_conditions=result["mixed_conditions"])
             except ValueError as error:
                 skipped.append({"race_id": race_id, "reason": str(error)})
                 continue
+            team_rows.append(teams)
             excluded = cleaned["exclusion_reason"].value_counts().to_dict()
             rows.append({
                 "race_id": race_id, "season": season, "track": race["raceName"],
@@ -53,23 +56,21 @@ def main() -> None:
                 "deg20_low": result["deg_at_20_laps_ci95"][0], "deg20_high": result["deg_at_20_laps_ci95"][1],
                 "neutralised_laps": int(excluded.get("neutralised", 0)),
                 "pit_stops": int(len(pits)),
+                "field_spread": result["field_spread"],
+                "mixed_conditions": result["mixed_conditions"],
             })
             print(f"{race_id:8s} {race['raceName']:28s} progress {result['progress_s_per_lap']:+.3f} s/lap  "
-                  f"deg@20 {result['deg_at_20_laps_s']:+.2f} s", flush=True)
+                  f"deg@20 {result['deg_at_20_laps_s']:+.2f} s"
+                  + ("  (wet/drying: excluded from circuits)" if result["mixed_conditions"] else ""), flush=True)
     output = Path(args.out)
     output.mkdir(parents=True, exist_ok=True)
     table = pd.DataFrame(rows)
     table.to_csv(output / "races.csv", index=False, float_format="%.4f")
+    if team_rows:
+        pd.concat(team_rows, ignore_index=True).to_csv(output / "teams.csv", index=False, float_format="%.4f")
     if not table.empty:
-        circuits = table.groupby("circuit").agg(
-            track=("track", "last"), races=("race_id", "count"),
-            progress_s_per_lap=("progress_s_per_lap", "median"),
-            deg_s_per_lap=("deg_s_per_lap", "median"),
-            deg_quad_s_per_lap2=("deg_quad_s_per_lap2", "median"),
-            deg_at_20_laps_s=("deg_at_20_laps_s", "median"),
-            pit_stops_per_race=("pit_stops", "mean"),
-        ).sort_values("deg_at_20_laps_s", ascending=False)
-        circuits.to_csv(output / "circuits.csv", float_format="%.4f")
+        circuits = circuit_table(table)
+        circuits.to_csv(output / "circuits.csv", index=False, float_format="%.4f")
     (output / "skipped.json").write_text(json.dumps(skipped, indent=2), encoding="utf-8")
     print(f"\n{len(table)} races measured, {len(skipped)} skipped -> {output}")
 
