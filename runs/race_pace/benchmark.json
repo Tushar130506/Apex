@@ -1,0 +1,71 @@
+{
+  "races": 95,
+  "methods": {
+    "all earlier races": {
+      "races": 95,
+      "progress_mae_s_per_lap": 0.0148,
+      "deg20_mae_s": 0.6536
+    },
+    "same circuit, earlier races": {
+      "races": 95,
+      "progress_mae_s_per_lap": 0.0111,
+      "deg20_mae_s": 0.7171
+    },
+    "same circuit, last race": {
+      "races": 95,
+      "progress_mae_s_per_lap": 0.0117,
+      "deg20_mae_s": 0.7208
+    },
+    "built-in default": {
+      "races": 95,
+      "progress_mae_s_per_lap": 0.0147,
+      "deg20_mae_s": 0.7508
+    }
+  },
+  "same_circuit_minus_all_races": {
+    "progress": {
+      "mean_difference": -0.003731052631578946,
+      "ci95_low": -0.006811092105263159,
+      "ci95_high": -0.0005742763157894789,
+      "share_circuit_better": 0.6842105263157895
+    },
+    "deg20": {
+      "mean_difference": 0.06345736842105264,
+      "ci95_low": -0.08229513157894736,
+      "ci95_high": 0.21150184210526302,
+      "share_circuit_better": 0.4421052631578947
+    }
+  },
+  "deg20_mae_by_season": {
+    "2022": {
+      "all earlier races": 0.8824,
+      "built-in default": 0.6663,
+      "same circuit, earlier races": 0.7867,
+      "same circuit, last race": 0.798
+    },
+    "2023": {
+      "all earlier races": 0.6419,
+      "built-in default": 0.8052,
+      "same circuit, earlier races": 0.4922,
+      "same circuit, last race": 0.5488
+    },
+    "2024": {
+      "all earlier races": 0.6872,
+      "built-in default": 0.7308,
+      "same circuit, earlier races": 0.8891,
+      "same circuit, last race": 0.8226
+    },
+    "2025": {
+      "all earlier races": 0.422,
+      "built-in default": 0.5958,
+      "same circuit, earlier races": 0.6661,
+      "same circuit, last race": 0.7616
+    },
+    "2026": {
+      "all earlier races": 0.7326,
+      "built-in default": 0.9687,
+      "same circuit, earlier races": 0.7744,
+      "same circuit, last race": 0.6831
+    }
+  }
+}

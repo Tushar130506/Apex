@@ -136,3 +136,23 @@ def test_team_pace_ignores_drivers_with_a_handful_of_laps():
     pits = pits[pits["driver"].ne("D15")]
     result = team_race_pace(clean_race_laps(laps, pits)).set_index("team")
     assert result["pace_gap_pct"].abs().max() < 3
+
+
+def test_race_pace_benchmark_uses_earlier_races_only():
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("bench", "scripts/benchmark_race_pace.py")
+    bench = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(bench)
+    rounds = range(1, 26)
+    races = pd.DataFrame({
+        "race_id": [f"2025_{n}" for n in rounds],
+        "circuit": ["A" if n % 5 == 0 else f"C{n}" for n in rounds],
+        "progress_s_per_lap": -0.05,
+        "deg_at_20_laps_s": [5.0 if n == 25 else 1.0 for n in rounds],
+        "mixed_conditions": False,
+        "season": 2025,
+    })
+    errors = bench.predictions(races)
+    assert set(errors["race_id"]) == {"2025_25"}            # needs 20 earlier races and an earlier visit
+    row = errors.set_index("method").loc["same circuit, earlier races"]
+    assert row["deg20_error"] == pytest.approx(4.0)        # its own 5.0 s is not used

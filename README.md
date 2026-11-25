@@ -98,6 +98,9 @@ takes about three hours) into `data/raw/jolpica/`; later runs read the cache.
 Results for 2021-2026 are in `runs/race_pace/` and `RACE_MODEL_REPORT.md`.
 `ParametricPace.for_circuit("runs/race_pace/circuits.csv", "bahrain")` gives
 the strategy simulator that circuit's measured numbers.
+`python scripts/benchmark_race_pace.py` checks them on later races: a
+circuit's history predicts its fuel-and-track gain better than an all-track
+median, but not its tyre wear.
 
 `predict_race.py` and `forecast_season.py` accept `--extra-results` for
 official results of races missing from the feature table

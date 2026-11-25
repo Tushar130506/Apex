@@ -176,6 +176,25 @@ safety-car and traffic laps are dropped. Output: `runs/race_pace/races.csv`,
 - **Qatar** varies too much to rely on: four races range from -1.2 s (2024,
   many stops and safety cars) to +0.7 s, and 2025 had a 25-lap stint limit.
 
+**Out-of-sample check** (`python scripts/benchmark_race_pace.py`, 95 dry
+races at circuits measured before, each predicted from earlier races only):
+
+| Prediction from | Progress error (s/lap) | 20-lap tyre loss error (s) |
+|---|---:|---:|
+| Median of all earlier races | 0.015 | 0.65 |
+| Median of earlier races at the same circuit | 0.011 | 0.72 |
+| Last race at the same circuit | 0.012 | 0.72 |
+| Strategy model's built-in default | 0.015 | 0.75 |
+
+The circuit's own history predicts the fuel-and-track gain better (difference
+-0.004 s/lap, 95% interval -0.007 to -0.001). It does **not** predict tyre
+wear better than one figure for every track (+0.06 s, interval -0.08 to
++0.21): a race's measured wear swings by about 0.7 s from year to year, more
+than circuits differ, because compounds, temperature and rules change. The
+built-in default wear (1.5 s at 20 laps) is too high against the 0.9 s
+median. So `ParametricPace.for_circuit` is right to use the circuit's
+progress term, but its per-circuit wear should be read as one noisy sample.
+
 Each team's race pace and tyre wear against the field are also measured
 (`team_race_pace`). 2026 so far, mean gap to the median team at a 12-lap-old
 tyre: Mercedes -1.6%, Ferrari -1.4%, McLaren -1.2%, Red Bull -1.1%, the
