@@ -4,6 +4,7 @@
   python scripts/compare_features.py --set temperature
   python scripts/compare_features.py --columns track_temp_z --first-season 2021 --last-season 2025
   python scripts/compare_features.py --set race_pace   # needs runs/race_pace/teams.csv
+  python scripts/compare_features.py --set layout      # needs runs/track_layout/ (track_layout_study.py)
 
 Both models are refitted before every race on earlier races only, exactly as
 in ``evaluate_race_model.py``. Choose features on 2021-2025 and look at 2026
@@ -30,10 +31,11 @@ from apex.features.form_features import (
     build_order_features,
     race_order,
 )
+from apex.features.track_layout import LAYOUT_MODEL_COLUMNS, add_layout_features
 from apex.models.race_order import paired_bootstrap, walk_forward_order
 from apex.models.walk_forward import MIN_TRAINING_RACES
 
-FEATURE_SETS = {"temperature": TEMPERATURE_COLUMNS, "race_pace": RACE_PACE_COLUMNS}
+FEATURE_SETS = {"temperature": TEMPERATURE_COLUMNS, "race_pace": RACE_PACE_COLUMNS, "layout": LAYOUT_MODEL_COLUMNS}
 
 
 def per_race(predictions: pd.DataFrame) -> pd.DataFrame:
@@ -59,6 +61,8 @@ def main() -> None:
     parser.add_argument("--first-season", type=int, default=2021)
     parser.add_argument("--last-season", type=int, default=2025)
     parser.add_argument("--seed", type=int, default=0)
+    parser.add_argument("--layout-dir", default="runs/track_layout",
+                        help="layouts.csv and race_circuits.csv from track_layout_study.py (for the layout set)")
     parser.add_argument("--race-pace", default="runs/race_pace/teams.csv",
                         help="team race-pace table from race_pace_study.py (for the race_pace set)")
     parser.add_argument("--out", default=None, help="optional JSON file for the result")
@@ -68,6 +72,11 @@ def main() -> None:
     features = build_order_features(pd.read_parquet(args.features))
     if set(extra) & set(RACE_PACE_COLUMNS):
         features = add_race_pace_form(features, pd.read_csv(args.race_pace))
+    if set(extra) & set(LAYOUT_MODEL_COLUMNS):
+        layout_dir = Path(args.layout_dir)
+        features = add_layout_features(
+            features, pd.read_csv(layout_dir / "race_circuits.csv"), pd.read_csv(layout_dir / "layouts.csv")
+        )
     unknown = set(extra) - set(features.columns)
     if unknown:
         parser.error(f"unknown columns: {sorted(unknown)}")

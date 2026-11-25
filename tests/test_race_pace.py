@@ -156,3 +156,25 @@ def test_race_pace_benchmark_uses_earlier_races_only():
     assert set(errors["race_id"]) == {"2025_25"}            # needs 20 earlier races and an earlier visit
     row = errors.set_index("method").loc["same circuit, earlier races"]
     assert row["deg20_error"] == pytest.approx(4.0)        # its own 5.0 s is not used
+
+
+def test_circuit_wear_is_pulled_towards_all_tracks():
+    from apex.features.race_pace import shrink_weight, wear_shrinkage
+    rng = np.random.default_rng(1)
+    rows = []
+    for circuit, true in (("A", 0.5), ("B", 1.0), ("C", 1.5), ("D", 2.0)):
+        for year in range(40):
+            deg20 = true + rng.normal(0, 0.7)
+            rows.append({"circuit": circuit, "track": circuit, "deg_at_20_laps_s": deg20, "deg_s_per_lap": deg20 / 20,
+                         "deg_quad_s_per_lap2": 0.0, "progress_s_per_lap": -0.05, "pit_stops": 30,
+                         "mixed_conditions": False})
+    races = pd.DataFrame(rows)
+    between, within = wear_shrinkage(races)
+    assert within == pytest.approx(0.49, rel=0.25) and between == pytest.approx(0.42, rel=0.6)
+    assert shrink_weight(1, 0.1, 0.5) < shrink_weight(6, 0.1, 0.5) < 1 and shrink_weight(3, 0.0, 0.5) == 0
+    table = circuit_table(races).set_index("circuit")
+    overall = races["deg_at_20_laps_s"].median()
+    for circuit, row in table.iterrows():
+        assert 0 <= row["shrink"] < 1
+        assert abs(row["deg_at_20_laps_s"] - overall) <= abs(row["raw_deg_at_20_laps_s"] - overall) + 0.15
+        assert row["deg_at_20_laps_s"] == pytest.approx(row["deg_s_per_lap"] * 20 + row["deg_quad_s_per_lap2"] * 400)

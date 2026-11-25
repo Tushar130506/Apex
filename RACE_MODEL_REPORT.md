@@ -181,19 +181,53 @@ races at circuits measured before, each predicted from earlier races only):
 
 | Prediction from | Progress error (s/lap) | 20-lap tyre loss error (s) |
 |---|---:|---:|
+| Circuit median, pulled towards all tracks (what `circuit_table` now does) | 0.011 | 0.64 |
 | Median of all earlier races | 0.015 | 0.65 |
 | Median of earlier races at the same circuit | 0.011 | 0.72 |
 | Last race at the same circuit | 0.012 | 0.72 |
-| Strategy model's built-in default | 0.015 | 0.75 |
 
 The circuit's own history predicts the fuel-and-track gain better (difference
--0.004 s/lap, 95% interval -0.007 to -0.001). It does **not** predict tyre
-wear better than one figure for every track (+0.06 s, interval -0.08 to
-+0.21): a race's measured wear swings by about 0.7 s from year to year, more
-than circuits differ, because compounds, temperature and rules change. The
-built-in default wear (1.5 s at 20 laps) is too high against the 0.9 s
-median. So `ParametricPace.for_circuit` is right to use the circuit's
-progress term, but its per-circuit wear should be read as one noisy sample.
+-0.004 s/lap, 95% interval -0.007 to -0.001). On its own it does **not**
+predict tyre wear better than one figure for every track (+0.06 s, interval
+-0.08 to +0.21): a race's measured wear swings by about 0.7 s from year to
+year, about as much as circuits differ, because compounds, temperature and
+rules change. So `circuit_table` now pulls each circuit's wear towards the
+all-track median, by more for circuits with few races (weight n·τ²/(n·τ²+σ²),
+with the between- and within-circuit variances estimated from the races;
+about 0.43 for one race, 0.8 for five). That is no worse than the all-track
+figure (-0.02 s, interval -0.13 to +0.10) while keeping real differences
+such as Bahrain and Suzuka (about 2.1 s) against Jeddah (0.2 s). The
+strategy model's default wear was lowered to the measured median (0.9 s at
+20 laps for a MEDIUM, from 1.5 s); its benchmark error (0.60 s) is not out
+of sample, since the default was set from the same races.
+
+**Track layout.** Layout features (lap length, corners, slow corners,
+corners per km, degrees turned per km, share of the lap cornering or on
+straights, longest straight) were computed for 33 circuits from track
+centrelines (`apex.features.track_layout`, MIT-licensed data in
+`data/reference/`). Each question was tested leave-one-circuit-out, which is
+where layout is useful: a circuit with no history (`python
+scripts/track_layout_study.py`, `runs/track_layout/study.json`).
+
+| Does layout predict... | Layout error | Other circuits' median | Verdict |
+|---|---:|---:|---|
+| Fuel-and-track gain (s/lap) | 0.012 | 0.016 | helps (interval -0.008 to -0.002) |
+| Tyre wear at 20 laps (s) | 0.79 | 0.72 | no; worse |
+| Pit stops per driver | 0.62 | 0.66 | no measurable gain |
+| Safety-car laps per race | 3.5 | 3.0 | no; worse |
+| How closely the finish follows the grid | 0.172 | 0.166 | no measurable gain |
+
+The fuel-and-track result is lap length alone (Spearman -0.75 with the
+circuit's gain; no other measure adds anything): a longer lap burns more fuel,
+so each lap gains more. `ParametricPace.for_lap_length` uses it for a circuit
+with no races: 0.0248 - 0.0161 × length_km s/lap. No layout measure, alone or
+together, predicted tyre wear; that depends on surface, temperature and
+compounds, which centrelines do not carry. In the race model, grid position
+times twistiness, grid times the longest straight, and each team's earlier
+form at twisty tracks (`LAYOUT_MODEL_COLUMNS`) made 2021-2025 forecasts
+slightly worse (log loss +0.011, interval -0.007 to +0.029; accuracy 59.6%
+against 60.5%), so they are not in the model (`compare_features.py --set
+layout`).
 
 Each team's race pace and tyre wear against the field are also measured
 (`team_race_pace`). 2026 so far, mean gap to the median team at a 12-lap-old

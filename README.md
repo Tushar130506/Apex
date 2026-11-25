@@ -80,9 +80,10 @@ python scripts/compare_features.py --set temperature
 ```
 
 It refits both models before every 2021-2025 race and reports the log-loss
-difference with a bootstrap interval. The temperature features and the
+difference with a bootstrap interval. The temperature features, the
 race-pace features (`--set race_pace`, each team's race pace and tyre wear in
-earlier races) gave no measurable gain, so they are not in the model.
+earlier races) and the layout features (`--set layout`) gave no measurable
+gain, so they are not in the model.
 
 ### Fuel, track and tyre wear from race laps
 
@@ -100,7 +101,18 @@ Results for 2021-2026 are in `runs/race_pace/` and `RACE_MODEL_REPORT.md`.
 the strategy simulator that circuit's measured numbers.
 `python scripts/benchmark_race_pace.py` checks them on later races: a
 circuit's history predicts its fuel-and-track gain better than an all-track
-median, but not its tyre wear.
+median, but not its tyre wear, so circuit wear is pulled towards the
+all-track median (by less for circuits with more races).
+
+```bash
+python scripts/track_layout_study.py
+```
+
+Measures each circuit's layout from its centreline (`data/reference/`, MIT)
+and tests whether it predicts wear, fuel gain, pit stops, safety cars or
+overtaking at circuits it has not seen. Only the fuel-and-track gain follows
+layout, through lap length; `ParametricPace.for_lap_length(km)` uses it for a
+new circuit.
 
 `predict_race.py` and `forecast_season.py` accept `--extra-results` for
 official results of races missing from the feature table
@@ -206,6 +218,7 @@ The optional strategy API uses the pace model fitted by that run.
 | `src/apex/` | The library (modules below) |
 | `scripts/` | Command-line entry points for the current pipeline |
 | `scripts/legacy/` | Scripts for the earlier winner classifier; see its README |
+| `data/reference/` | Circuit centrelines (bacinger/f1-circuits, MIT licence) |
 | `configs/split.json` | Train, validation and test seasons for the lap-pace model |
 | `data/processed/` | Imported laps and race results (not committed) |
 | `runs/<name>/` | Stored models, metrics, predictions and forecasts |
@@ -226,6 +239,7 @@ The optional strategy API uses the pace model fitted by that run.
 | `apex.features.fuel` | Fuel correction and fuel-burn sampling |
 | `apex.features.tyre_degradation`, `apex.models.degradation` | Degradation by compound and by stint |
 | `apex.features.race_pace`, `apex.ingestion.jolpica` | Fuel/track and tyre wear per race, circuit and team from official lap times |
+| `apex.features.track_layout` | Circuit layout measures from track centrelines |
 | `apex.strategy` | Parametric pace model and pit-strategy simulator |
 | `apex.models.race_monte_carlo`, `apex.models.safety_hazard` | Lap-level race simulation and safety-car hazard |
 | `apex.models.replay` | Leakage-safe lap-by-lap replay of a finished race |

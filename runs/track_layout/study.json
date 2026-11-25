@@ -1,0 +1,167 @@
+{
+  "tyre_wear_20_laps_s": {
+    "races": 126,
+    "circuits": 30,
+    "layout_mae": 0.7884775506983522,
+    "median_mae": 0.7189730158730159,
+    "difference_per_circuit": 0.06129329050149748,
+    "ci95": [
+      0.0023989541572977174,
+      0.12123185938131165
+    ],
+    "share_of_circuits_better": 0.4,
+    "verdict": "no measurable gain",
+    "spearman_with_circuit_mean": {
+      "length_km": 0.10234731401634442,
+      "corners": -0.09553939262475829,
+      "slow_corners": -0.08282470569725082,
+      "corners_per_km": -0.13483146150848854,
+      "turning_deg_per_km": 0.07497219132369298,
+      "cornering_share": 0.07897664071190211,
+      "straight_share": -0.0033370411568409346,
+      "longest_straight_m": 0.2387096774193548
+    },
+    "ridge_coefficient_per_sd": {
+      "length_km": 0.147094827149008,
+      "corners": 0.02186225509712651,
+      "slow_corners": -0.15769965764363741,
+      "corners_per_km": -0.07180699457383535,
+      "turning_deg_per_km": 0.1496592235538054,
+      "cornering_share": 0.2594486942520972,
+      "straight_share": 0.16780853159254813,
+      "longest_straight_m": 0.05275665463430186
+    }
+  },
+  "fuel_track_gain_s_per_lap": {
+    "races": 126,
+    "circuits": 30,
+    "layout_mae": 0.011608871917209575,
+    "median_mae": 0.016223015873015875,
+    "difference_per_circuit": -0.00484032821993036,
+    "ci95": [
+      -0.007674542818040379,
+      -0.002141919436268643
+    ],
+    "share_of_circuits_better": 0.7,
+    "verdict": "helps",
+    "spearman_with_circuit_mean": {
+      "length_km": -0.7518077696983213,
+      "corners": -0.1788822670421006,
+      "slow_corners": -0.034529100740270775,
+      "corners_per_km": 0.2667704989252108,
+      "turning_deg_per_km": 0.2707452725250278,
+      "cornering_share": 0.07853170189098999,
+      "straight_share": 0.09054505005561733,
+      "longest_straight_m": -0.2489432703003337
+    },
+    "ridge_coefficient_per_sd": {
+      "length_km": -0.011067878643876261,
+      "corners": -0.003867719721651308,
+      "slow_corners": -0.004144332559578238,
+      "corners_per_km": 0.005081486056938753,
+      "turning_deg_per_km": 0.00388924880879164,
+      "cornering_share": -0.005720928992390942,
+      "straight_share": 0.002476128240735158,
+      "longest_straight_m": 0.0001257137853663544
+    }
+  },
+  "pit_stops_per_driver": {
+    "races": 126,
+    "circuits": 30,
+    "layout_mae": 0.6161792351235991,
+    "median_mae": 0.6587198178934872,
+    "difference_per_circuit": -0.01601155141625819,
+    "ci95": [
+      -0.09314209831723842,
+      0.06411241147643598
+    ],
+    "share_of_circuits_better": 0.5666666666666667,
+    "verdict": "no measurable gain",
+    "spearman_with_circuit_mean": {
+      "length_km": -0.41472911592710004,
+      "corners": -0.07814806110677629,
+      "slow_corners": -0.07763405656636045,
+      "corners_per_km": 0.21982423097423542,
+      "turning_deg_per_km": 0.2449388209121246,
+      "cornering_share": 0.3236929922135706,
+      "straight_share": -0.1568409343715239,
+      "longest_straight_m": -0.08476084538375972
+    },
+    "ridge_coefficient_per_sd": {
+      "length_km": -0.1377187229842539,
+      "corners": -0.08411304178109306,
+      "slow_corners": -0.0469775827515101,
+      "corners_per_km": 0.007194042143705875,
+      "turning_deg_per_km": -0.1349531010339234,
+      "cornering_share": 0.4003814333061512,
+      "straight_share": 0.08873477103840509,
+      "longest_straight_m": -0.0902255882433507
+    }
+  },
+  "safety_car_laps": {
+    "races": 134,
+    "circuits": 30,
+    "layout_mae": 3.5285698688466827,
+    "median_mae": 2.9737802600389824,
+    "difference_per_circuit": 0.5683763848713909,
+    "ci95": [
+      0.22071199783168324,
+      0.9560311573683071
+    ],
+    "share_of_circuits_better": 0.26666666666666666,
+    "verdict": "no measurable gain",
+    "spearman_with_circuit_mean": {
+      "length_km": -0.10056736072910365,
+      "corners": 0.0009034457931419223,
+      "slow_corners": -0.10449002380879327,
+      "corners_per_km": 0.05161864532998241,
+      "turning_deg_per_km": 0.06295884315906564,
+      "cornering_share": 0.11991101223581756,
+      "straight_share": -0.20444938820912126,
+      "longest_straight_m": -0.2525027808676307
+    },
+    "ridge_coefficient_per_sd": {
+      "length_km": 0.40498278790388637,
+      "corners": -0.5840276546477153,
+      "slow_corners": -0.14224993164826746,
+      "corners_per_km": 0.85224953240468,
+      "turning_deg_per_km": 0.27366965527199527,
+      "cornering_share": 0.06350207390510838,
+      "straight_share": -0.14805946677129564,
+      "longest_straight_m": -0.9953227636592559
+    }
+  },
+  "grid_finish_spearman": {
+    "races": 192,
+    "circuits": 33,
+    "layout_mae": 0.17204387557113213,
+    "median_mae": 0.1658884359448134,
+    "difference_per_circuit": 3.601915212791121e-05,
+    "ci95": [
+      -0.010481785955316503,
+      0.010574448577687242
+    ],
+    "share_of_circuits_better": 0.48484848484848486,
+    "verdict": "no measurable gain",
+    "spearman_with_circuit_mean": {
+      "length_km": 0.01804963656339451,
+      "corners": 0.20612052697624503,
+      "slow_corners": 0.20569226722095427,
+      "corners_per_km": 0.18484164851031787,
+      "turning_deg_per_km": 0.35294117647058826,
+      "cornering_share": 0.4505347593582888,
+      "straight_share": -0.30782085561497324,
+      "longest_straight_m": 0.12767379679144386
+    },
+    "ridge_coefficient_per_sd": {
+      "length_km": -0.0011224797471888525,
+      "corners": 0.0019396351990227645,
+      "slow_corners": 0.008804254897273798,
+      "corners_per_km": -0.019635538910912423,
+      "turning_deg_per_km": 0.004417942557156544,
+      "cornering_share": 0.01651336897324562,
+      "straight_share": -0.043686269250546965,
+      "longest_straight_m": 0.025307330436757636
+    }
+  }
+}

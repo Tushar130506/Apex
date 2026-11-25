@@ -199,33 +199,78 @@ def team_race_pace(cleaned: pd.DataFrame) -> pd.DataFrame:
     })
 
 
+def _middle(group: pd.DataFrame) -> pd.DataFrame:
+    """The race(s) with the median 20-lap loss: one row, or the middle two."""
+    ordered = group.sort_values("deg_at_20_laps_s")
+    n = len(ordered)
+    return ordered.iloc[[(n - 1) // 2, n // 2]]
+
+
+def wear_shrinkage(dry: pd.DataFrame) -> tuple[float, float]:
+    """Between-circuit and within-circuit variance of the 20-lap loss.
+
+    Within: pooled variance of races around their circuit's mean. Between:
+    variance of circuit means less the part the within-circuit noise
+    explains (method of moments, floored at zero).
+    """
+    groups = dry.groupby("circuit")["deg_at_20_laps_s"]
+    counts = groups.size()
+    repeated = counts[counts > 1].index
+    deviations = dry[dry["circuit"].isin(repeated)].groupby("circuit")["deg_at_20_laps_s"].transform(
+        lambda values: values - values.mean())
+    dof = int((counts[repeated] - 1).sum())
+    within = float((deviations**2).sum() / dof) if dof else 0.0
+    means = groups.mean()
+    between = float(max(means.var(ddof=1) - within * (1.0 / counts).mean(), 0.0)) if len(means) > 1 else 0.0
+    return between, within
+
+
+def shrink_weight(races: int, between: float, within: float) -> float:
+    """Weight on a circuit's own wear figure; the rest goes to all tracks."""
+    if between <= 0:
+        return 0.0
+    return races * between / (races * between + within)
+
+
 def circuit_table(races: pd.DataFrame) -> pd.DataFrame:
     """One row per circuit from dry races: median progress and degradation.
 
-    The degradation coefficients are those of the race with the median
+    The degradation coefficients start from the race with the median
     20-lap loss (the mean of the middle two for an even count), so the
-    linear and quadratic terms stay consistent with each other.
+    linear and quadratic terms stay consistent with each other. They are
+    then pulled towards the all-track median race by ``1 - shrink``, with
+    ``shrink`` from :func:`wear_shrinkage`: a circuit's measured wear varies
+    from year to year by about as much as circuits differ, so one or two
+    races say little. ``raw_deg_at_20_laps_s`` keeps the unshrunk figure.
     """
     dry = races[~races["mixed_conditions"].astype(bool)]
+    between, within = wear_shrinkage(dry)
+    overall = _middle(dry)
+    all_lin = float(overall["deg_s_per_lap"].mean())
+    all_quad = float(overall["deg_quad_s_per_lap2"].mean())
     rows = []
     for circuit, group in dry.groupby("circuit"):
-        ordered = group.sort_values("deg_at_20_laps_s")
-        n = len(ordered)
-        middle = ordered.iloc[[(n - 1) // 2, n // 2]]
+        n = len(group)
+        middle = _middle(group)
+        weight = shrink_weight(n, between, within)
+        lin = weight * float(middle["deg_s_per_lap"].mean()) + (1 - weight) * all_lin
+        quad = weight * float(middle["deg_quad_s_per_lap2"].mean()) + (1 - weight) * all_quad
         rows.append({
             "circuit": circuit,
             "track": group["track"].iloc[-1],
             "races": n,
             "progress_s_per_lap": float(group["progress_s_per_lap"].median()),
-            "deg_s_per_lap": float(middle["deg_s_per_lap"].mean()),
-            "deg_quad_s_per_lap2": float(middle["deg_quad_s_per_lap2"].mean()),
-            "deg_at_20_laps_s": float(middle["deg_at_20_laps_s"].mean()),
+            "deg_s_per_lap": lin,
+            "deg_quad_s_per_lap2": quad,
+            "deg_at_20_laps_s": lin * 20 + quad * 400,
+            "raw_deg_at_20_laps_s": float(middle["deg_at_20_laps_s"].mean()),
+            "shrink": weight,
             "deg_at_20_laps_range": f"{group['deg_at_20_laps_s'].min():.2f} to {group['deg_at_20_laps_s'].max():.2f}",
             "pit_stops_per_race": float(group["pit_stops"].mean()),
         })
     columns = ["circuit", "track", "races", "progress_s_per_lap", "deg_s_per_lap", "deg_quad_s_per_lap2",
-               "deg_at_20_laps_s", "deg_at_20_laps_range", "pit_stops_per_race"]
+               "deg_at_20_laps_s", "raw_deg_at_20_laps_s", "shrink", "deg_at_20_laps_range", "pit_stops_per_race"]
     return pd.DataFrame(rows, columns=columns).sort_values("deg_at_20_laps_s", ascending=False)
 
 
-__all__ = ["circuit_table", "clean_race_laps", "field_spread", "fit_race_pace", "team_race_pace"]
+__all__ = ["circuit_table", "shrink_weight", "wear_shrinkage", "clean_race_laps", "field_spread", "fit_race_pace", "team_race_pace"]

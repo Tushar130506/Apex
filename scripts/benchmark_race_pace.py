@@ -5,9 +5,12 @@
 
 For every dry race whose circuit was measured before (and with at least 20
 earlier dry races), predicts its progress (fuel + track, s/lap) and its
-20-lap tyre loss from earlier races only, four ways: the strategy model's
+20-lap tyre loss from earlier races only, five ways: the strategy model's
 built-in defaults, the median of all earlier races, the median of earlier
-races at the same circuit, and the last race there. Reports mean absolute
+races at the same circuit, the last race there, and the circuit median pulled
+towards the all-track median as ``circuit_table`` does (shrinkage estimated
+from earlier races). The built-in default wear was itself set from the
+2021-2026 median, so its row is not out of sample. Reports mean absolute
 errors and a paired bootstrap of "same circuit" against "all earlier races".
 Reads runs/race_pace/races.csv from race_pace_study.py.
 """
@@ -23,6 +26,7 @@ import pandas as pd
 
 sys.path.insert(0, "src")
 from apex.features.form_features import race_order
+from apex.features.race_pace import shrink_weight, wear_shrinkage
 from apex.strategy.pace_model import ParametricPace
 
 MIN_EARLIER = 20
@@ -40,11 +44,18 @@ def predictions(races: pd.DataFrame) -> pd.DataFrame:
         same = past[past["circuit"] == race["circuit"]]
         if same.empty or len(past) < MIN_EARLIER:
             continue
+        between, within = wear_shrinkage(past)
+        weight = shrink_weight(len(same), between, within)
+        all_deg20 = past["deg_at_20_laps_s"].median()
         methods = {
             "built-in default": (default_progress, default_deg20),
             "all earlier races": (past["progress_s_per_lap"].median(), past["deg_at_20_laps_s"].median()),
             "same circuit, earlier races": (same["progress_s_per_lap"].median(), same["deg_at_20_laps_s"].median()),
             "same circuit, last race": (same["progress_s_per_lap"].iloc[-1], same["deg_at_20_laps_s"].iloc[-1]),
+            "same circuit, shrunk": (
+                same["progress_s_per_lap"].median(),
+                weight * same["deg_at_20_laps_s"].median() + (1 - weight) * all_deg20,
+            ),
         }
         for method, (progress, deg20) in methods.items():
             rows.append({
@@ -55,9 +66,9 @@ def predictions(races: pd.DataFrame) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
-def paired(errors: pd.DataFrame, column: str, seed: int = 0) -> dict:
+def paired(errors: pd.DataFrame, column: str, method: str = "same circuit, earlier races", seed: int = 0) -> dict:
     wide = errors.pivot(index="race_id", columns="method", values=column)
-    delta = (wide["same circuit, earlier races"] - wide["all earlier races"]).to_numpy()
+    delta = (wide[method] - wide["all earlier races"]).to_numpy()
     rng = np.random.default_rng(seed)
     means = [rng.choice(delta, len(delta)).mean() for _ in range(5000)]
     return {
@@ -86,13 +97,15 @@ def main() -> None:
             "progress": paired(errors, "progress_error"),
             "deg20": paired(errors, "deg20_error"),
         },
+        "shrunk_minus_all_races_deg20": paired(errors, "deg20_error", "same circuit, shrunk"),
         "deg20_mae_by_season": errors.groupby(["season", "method"])["deg20_error"].mean().unstack().round(4)
         .to_dict(orient="index"),
     }
     Path(args.out).parent.mkdir(parents=True, exist_ok=True)
     Path(args.out).write_text(json.dumps(report, indent=2), encoding="utf-8")
     print(summary.round(3).to_string())
-    print(json.dumps(report["same_circuit_minus_all_races"], indent=2))
+    print(json.dumps({key: report[key] for key in ("same_circuit_minus_all_races", "shrunk_minus_all_races_deg20")},
+                     indent=2))
 
 
 if __name__ == "__main__":

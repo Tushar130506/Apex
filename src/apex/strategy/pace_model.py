@@ -5,16 +5,22 @@ import numpy as np
 import pandas as pd
 
 DRY = ("SOFT", "MEDIUM", "HARD")
+# Per-lap gain from fuel burn and track grip against lap length, fitted on
+# 2021-2026 dry races (runs/race_pace, runs/track_layout).
+PROGRESS_INTERCEPT_S = 0.0248
+PROGRESS_PER_KM_S = -0.0161
 
 
 @dataclass
 class ParametricPace:
     """lap = session_base + offset[compound] + deg[compound] * tyre_age + fuel_s_per_kg * fuel_kg."""
     offset: dict = field(default_factory=lambda: {"SOFT": -0.7, "MEDIUM": 0.0, "HARD": 0.5})
-    deg: dict = field(default_factory=lambda: {"SOFT": 0.09, "MEDIUM": 0.055, "HARD": 0.032})
+    # Defaults put a MEDIUM tyre 0.9 s slower after 20 laps, the median measured
+    # from 2021-2026 race laps (runs/race_pace); SOFT and HARD keep their ratios.
+    deg: dict = field(default_factory=lambda: {"SOFT": 0.054, "MEDIUM": 0.033, "HARD": 0.019})
     fuel_s_per_kg: float = 0.032
     burn_kg_per_lap: float = 1.6
-    deg_quad: dict = field(default_factory=lambda: {"SOFT": 0.0015, "MEDIUM": 0.001, "HARD": 0.0006})
+    deg_quad: dict = field(default_factory=lambda: {"SOFT": 0.0009, "MEDIUM": 0.0006, "HARD": 0.00036})
     fit_provenance: str = "default_assumptions"
 
     def rel(self, compound: str, age, fuel_kg, deg_mult=1.0):
@@ -85,6 +91,22 @@ class ParametricPace:
             burn_kg_per_lap=burn_kg_per_lap,
             fit_provenance=provenance,
         )
+
+    @classmethod
+    def for_lap_length(cls, length_km: float, burn_kg_per_lap: float = 1.6) -> "ParametricPace":
+        """Pace model for a circuit with no measured races, from its lap length.
+
+        Across 126 dry races (2021-2026) the per-lap gain from fuel burn and
+        track grip followed lap length (Spearman -0.75; scripts/track_layout_study.py):
+        ``progress = 0.0248 - 0.0161 * length_km`` s/lap. No layout measure
+        predicted tyre wear, so wear stays at the default.
+        """
+        if length_km <= 0:
+            raise ValueError("length_km must be positive")
+        base = cls()
+        progress = min(PROGRESS_INTERCEPT_S + PROGRESS_PER_KM_S * length_km, 0.0)
+        return cls.from_race_pace(progress, base.deg["MEDIUM"], base.deg_quad["MEDIUM"], burn_kg_per_lap,
+                                  provenance=f"lap_length:{length_km:.3f}km")
 
     @classmethod
     def for_circuit(cls, circuits_csv: str, circuit: str, burn_kg_per_lap: float = 1.6) -> "ParametricPace":

@@ -58,3 +58,12 @@ def test_dipping_degradation_curve_becomes_a_floored_line():
     assert dipping.deg["MEDIUM"] == pytest.approx(0.06) and dipping.deg_quad["MEDIUM"] == 0
     improving = ParametricPace.from_race_pace(-0.05, -0.1, 0.002)   # faster with age
     assert improving.deg["MEDIUM"] == 0 and improving.deg_quad["MEDIUM"] == 0
+
+
+def test_pace_model_for_a_new_circuit_follows_lap_length():
+    short, long = ParametricPace.for_lap_length(3.3), ParametricPace.for_lap_length(7.0)
+    assert 0 < short.fuel_s_per_kg < long.fuel_s_per_kg
+    assert long.fuel_s_per_kg * long.burn_kg_per_lap == pytest.approx(0.0161 * 7.0 - 0.0248)
+    assert short.deg == ParametricPace().deg
+    with pytest.raises(ValueError):
+        ParametricPace.for_lap_length(0)
